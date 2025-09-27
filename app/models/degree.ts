@@ -3,9 +3,9 @@ import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 
-export default class Promotion extends BaseModel {
-  @column({ isPrimary: true, columnName: 'id_promotion' })
-  declare idPromotion: number
+export default class Degree extends BaseModel {
+  @column({ isPrimary: true, columnName: 'id_degree' })
+  declare idDegree: number
 
   @column()
   declare name: string
@@ -17,7 +17,7 @@ export default class Promotion extends BaseModel {
   declare updatedAt: DateTime | null
 
   @hasMany(() => Class, {
-    foreignKey: 'id_promotion',
+    foreignKey: 'idDegree',
   })
   declare classes: HasMany<typeof Class>
 }

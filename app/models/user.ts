@@ -1,5 +1,6 @@
 import Class from '#models/class'
-import Evaluation from '#models/evaluation'
+import ExamGrade from '#models/exam_grade'
+import UserResponse from '#models/user_response'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { compose } from '@adonisjs/core/helpers'
@@ -41,10 +42,15 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column.dateTime({ autoCreate: true, autoUpdate: true, columnName: 'updated_at' })
   declare updatedAt: DateTime | null
 
-  @hasMany(() => Evaluation, {
+  @hasMany(() => ExamGrade, {
     foreignKey: 'idUser',
   })
-  declare evaluations: HasMany<typeof Evaluation>
+  declare examGrades: HasMany<typeof ExamGrade>
+
+  @hasMany(() => UserResponse, {
+    foreignKey: 'idUser',
+  })
+  declare userResponses: HasMany<typeof UserResponse>
 
   @manyToMany(() => Class, {
     pivotTable: 'user_classes',

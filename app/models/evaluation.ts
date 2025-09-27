@@ -1,41 +1,26 @@
-import Exam from '#models/exam'
-import Response from '#models/response'
-import User from '#models/user'
-import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import ExamGrade from '#models/exam_grade'
+import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
+import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 
 export default class Evaluation extends BaseModel {
-  @column({ isPrimary: true })
+  @column({ isPrimary: true, columnName: 'id_evaluation' })
   declare idEvaluation: number
 
   @column()
   declare note: number | null
 
-  @column()
-  declare idExam: number
+  @column({ columnName: 'id_exam_grade' })
+  declare idExamGrade: number
 
-  @column()
-  declare idUser: number
-
-  @column.dateTime({ autoCreate: true })
+  @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  @column.dateTime({ autoCreate: true, autoUpdate: true, columnName: 'updated_at' })
   declare updatedAt: DateTime | null
 
-  @belongsTo(() => Exam, {
-    foreignKey: 'idExam',
+  @belongsTo(() => ExamGrade, {
+    foreignKey: 'idExamGrade',
   })
-  declare exam: BelongsTo<typeof Exam>
-
-  @belongsTo(() => User, {
-    foreignKey: 'idUser',
-  })
-  declare user: BelongsTo<typeof User>
-
-  @hasMany(() => Response, {
-    foreignKey: 'idEvaluation',
-  })
-  declare responses: HasMany<typeof Response>
+  declare examGrade: BelongsTo<typeof ExamGrade>
 }

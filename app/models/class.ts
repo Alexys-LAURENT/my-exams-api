@@ -1,5 +1,5 @@
+import Degree from '#models/degree'
 import Exam from '#models/exam'
-import Promotion from '#models/promotion'
 import User from '#models/user'
 import { BaseModel, belongsTo, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
@@ -9,11 +9,14 @@ export default class Class extends BaseModel {
   @column({ isPrimary: true, columnName: 'id_class' })
   declare idClass: number
 
-  @column.dateTime({ columnName: 'creation_date' })
-  declare creationDate: DateTime
+  @column.dateTime({ columnName: 'start_date' })
+  declare startDate: DateTime
 
-  @column({ columnName: 'id_promotion' })
-  declare idPromotion: number
+  @column.dateTime({ columnName: 'end_date' })
+  declare endDate: DateTime | null
+
+  @column({ columnName: 'id_degree' })
+  declare idDegree: number
 
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
@@ -21,13 +24,13 @@ export default class Class extends BaseModel {
   @column.dateTime({ autoCreate: true, autoUpdate: true, columnName: 'updated_at' })
   declare updatedAt: DateTime | null
 
-  @belongsTo(() => Promotion, {
-    foreignKey: 'id_promotion',
+  @belongsTo(() => Degree, {
+    foreignKey: 'idDegree',
   })
-  declare promotion: BelongsTo<typeof Promotion>
+  declare degree: BelongsTo<typeof Degree>
 
   @hasMany(() => Exam, {
-    foreignKey: 'id_class',
+    foreignKey: 'idClass',
   })
   declare exams: HasMany<typeof Exam>
 

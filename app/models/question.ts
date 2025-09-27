@@ -1,12 +1,12 @@
 import Answer from '#models/answer'
 import Exam from '#models/exam'
-import Response from '#models/response'
+import UserResponse from '#models/user_response'
 import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 
 export default class Question extends BaseModel {
-  @column({ isPrimary: true })
+  @column({ isPrimary: true, columnName: 'id_question' })
   declare idQuestion: number
 
   @column()
@@ -15,22 +15,22 @@ export default class Question extends BaseModel {
   @column()
   declare commentary: string | null
 
-  @column()
+  @column({ columnName: 'is_multiple' })
   declare isMultiple: boolean
 
-  @column()
+  @column({ columnName: 'is_qcm' })
   declare isQcm: boolean
 
-  @column()
+  @column({ columnName: 'max_points' })
   declare maxPoints: number
 
-  @column()
+  @column({ columnName: 'id_exam' })
   declare idExam: number
 
-  @column.dateTime({ autoCreate: true })
+  @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  @column.dateTime({ autoCreate: true, autoUpdate: true, columnName: 'updated_at' })
   declare updatedAt: DateTime | null
 
   @belongsTo(() => Exam, {
@@ -43,8 +43,8 @@ export default class Question extends BaseModel {
   })
   declare answers: HasMany<typeof Answer>
 
-  @hasMany(() => Response, {
+  @hasMany(() => UserResponse, {
     foreignKey: 'idQuestion',
   })
-  declare responses: HasMany<typeof Response>
+  declare userResponses: HasMany<typeof UserResponse>
 }
