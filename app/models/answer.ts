@@ -1,7 +1,7 @@
 import Question from '#models/question'
 import UserResponse from '#models/user_response'
-import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column, manyToMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 
 export default class Answer extends BaseModel {
@@ -31,8 +31,12 @@ export default class Answer extends BaseModel {
   })
   declare question: BelongsTo<typeof Question>
 
-  @hasMany(() => UserResponse, {
-    foreignKey: 'idAnswer',
+  @manyToMany(() => UserResponse, {
+    pivotTable: 'user_responses_answers',
+    localKey: 'idAnswer',
+    pivotForeignKey: 'id_answer',
+    relatedKey: 'idUserResponse',
+    pivotRelatedForeignKey: 'id_user_response',
   })
-  declare userResponses: HasMany<typeof UserResponse>
+  declare userResponses: ManyToMany<typeof UserResponse>
 }

@@ -13,7 +13,7 @@ export default class ExamGrade extends BaseModel {
   declare note: number
 
   @column()
-  declare status: 'en_cours' | 'termine' | 'corrige'
+  declare status: 'en cours' | 'terminé' | 'corrigé'
 
   @column({ columnName: 'id_user' })
   declare idUser: number
