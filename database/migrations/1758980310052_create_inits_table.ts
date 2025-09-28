@@ -26,7 +26,7 @@ export default class extends BaseSchema {
       table.increments('id_exam').primary()
       table.string('title').notNullable()
       table.text('desc').nullable()
-      table.datetime('time').notNullable()
+      table.integer('time').notNullable()
       table.string('image_path').nullable()
       table.timestamp('created_at').notNullable().defaultTo(this.now())
       table.timestamp('updated_at').nullable()

@@ -15,8 +15,8 @@ export default class Exam extends BaseModel {
   @column()
   declare desc: string | null
 
-  @column.dateTime()
-  declare time: DateTime
+  @column()
+  declare time: number
 
   @column({ columnName: 'image_path' })
   declare imagePath: string | null
