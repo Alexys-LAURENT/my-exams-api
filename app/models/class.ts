@@ -1,8 +1,8 @@
 import Degree from '#models/degree'
 import Exam from '#models/exam'
 import User from '#models/user'
-import { BaseModel, belongsTo, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column, manyToMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 
 export default class Class extends BaseModel {
@@ -29,18 +29,33 @@ export default class Class extends BaseModel {
   })
   declare degree: BelongsTo<typeof Degree>
 
-  @hasMany(() => Exam, {
-    foreignKey: 'idClass',
+  // Relation many-to-many avec Exam via la table pivot exams_classes
+  @manyToMany(() => Exam, {
+    pivotTable: 'exams_classes',
+    localKey: 'idClass',
+    pivotForeignKey: 'id_class',
+    relatedKey: 'idExam',
+    pivotRelatedForeignKey: 'id_exam',
   })
-  declare exams: HasMany<typeof Exam>
+  declare exams: ManyToMany<typeof Exam>
 
+  // Relations avec les étudiants via students_classes
   @manyToMany(() => User, {
-    pivotTable: 'user_classes',
+    pivotTable: 'students_classes',
     localKey: 'idClass',
     pivotForeignKey: 'id_class',
     relatedKey: 'idUser',
-    pivotRelatedForeignKey: 'id_user',
-    pivotColumns: ['relation_type'],
+    pivotRelatedForeignKey: 'id_student',
   })
-  declare users: ManyToMany<typeof User>
+  declare students: ManyToMany<typeof User>
+
+  // Relations avec les enseignants via teachers_classes
+  @manyToMany(() => User, {
+    pivotTable: 'teachers_classes',
+    localKey: 'idClass',
+    pivotForeignKey: 'id_class',
+    relatedKey: 'idUser',
+    pivotRelatedForeignKey: 'id_teacher',
+  })
+  declare teachers: ManyToMany<typeof User>
 }

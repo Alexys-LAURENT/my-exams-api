@@ -1,8 +1,8 @@
 import Class from '#models/class'
 import ExamGrade from '#models/exam_grade'
 import Question from '#models/question'
-import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
+import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 
 export default class Exam extends BaseModel {
@@ -21,19 +21,21 @@ export default class Exam extends BaseModel {
   @column({ columnName: 'image_path' })
   declare imagePath: string | null
 
-  @column({ columnName: 'id_class' })
-  declare idClass: number
-
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true, columnName: 'updated_at' })
   declare updatedAt: DateTime | null
 
-  @belongsTo(() => Class, {
-    foreignKey: 'idClass',
+  // Relation many-to-many avec Class via la table pivot exams_classes
+  @manyToMany(() => Class, {
+    pivotTable: 'exams_classes',
+    localKey: 'idExam',
+    pivotForeignKey: 'id_exam',
+    relatedKey: 'idClass',
+    pivotRelatedForeignKey: 'id_class',
   })
-  declare class: BelongsTo<typeof Class>
+  declare classes: ManyToMany<typeof Class>
 
   @hasMany(() => Question, {
     foreignKey: 'idExam',
