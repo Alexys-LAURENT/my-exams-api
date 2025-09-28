@@ -53,14 +53,23 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare userResponses: HasMany<typeof UserResponse>
 
   @manyToMany(() => Class, {
-    pivotTable: 'user_classes',
+    pivotTable: 'students_classes',
     localKey: 'idUser',
-    pivotForeignKey: 'id_user',
+    pivotForeignKey: 'id_student',
     relatedKey: 'idClass',
     pivotRelatedForeignKey: 'id_class',
-    pivotColumns: ['relation_type'],
   })
-  declare classes: ManyToMany<typeof Class>
+  declare studentClasses: ManyToMany<typeof Class>
+
+  // Relations avec les classes en tant qu'enseignant
+  @manyToMany(() => Class, {
+    pivotTable: 'teachers_classes',
+    localKey: 'idUser',
+    pivotForeignKey: 'id_teacher',
+    relatedKey: 'idClass',
+    pivotRelatedForeignKey: 'id_class',
+  })
+  declare teacherClasses: ManyToMany<typeof Class>
 
   static accessTokens = DbAccessTokensProvider.forModel(User)
 }
