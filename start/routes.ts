@@ -9,6 +9,7 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
+const ClassesController = () => import('../controllers/classes_controller/controller.js')
 const AuthController = () => import('../controllers/auth_controller/controller.js')
 
 /*
@@ -25,3 +26,17 @@ router
     router.post('/logout', [AuthController, 'logout']).use(middleware.auth())
   })
   .prefix('/api/auth')
+
+/*
+   ██████  ██       █████  ███████  ███████  ███████ ███████ 
+  ██       ██      ██   ██ ██       ██       ██      ██
+  ██       ██      ███████ ███████  ███████  █████   ███████ 
+  ██       ██      ██   ██      ██       ██  ██           ██ 
+   ██████  ███████ ██   ██ ███████  ███████  ███████ ███████ 
+  */
+
+router
+  .group(() => {
+    router.get(':idClass', [ClassesController, 'getOneClass'])
+  })
+  .prefix('/api/classes')
