@@ -20,4 +20,12 @@ export default class ClassesController extends AbstractController {
       data: theClass,
     })
   }
+
+  /**
+   * List all classes (for admin)
+   */
+  public async getAll({}: HttpContext) {
+    const classes = await Class.all()
+    return this.buildJSONResponse({ data: classes })
+  }
 }
