@@ -38,5 +38,7 @@ router
 router
   .group(() => {
     router.get(':idClass', [ClassesController, 'getOneClass'])
+    router.delete('/:idClass', [ClassesController, 'deleteIdClass']).use(middleware.auth())
+
   })
   .prefix('/api/classes')
