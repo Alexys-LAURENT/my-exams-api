@@ -20,4 +20,13 @@ export default class ClassesController extends AbstractController {
       data: theClass,
     })
   }
+
+  public async getStudentsOfClass({ params }: HttpContext) {
+    const valid = await onlyIdClassWithExistsValidator.validate(params)
+    const theClass = await Class.findOrFail(valid.idClass)
+    
+    const students = await theClass.related('students').query().select(['id_user', 'last_name', 'name', 'email', 'avatar_path', 'account_type'])
+    return this.buildJSONResponse({ data: students })
+  }
+
 }
