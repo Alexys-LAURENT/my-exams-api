@@ -20,7 +20,6 @@ export default class ClassesController extends AbstractController {
       data: theClass,
     })
   }
-
   
   public async getAll({}: HttpContext) {
     const classes = await Class.all()

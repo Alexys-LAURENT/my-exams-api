@@ -32,7 +32,7 @@ router
   router
   .group(() => {
     router.get('/', [ClassesController, 'getAll'])
-    router.get(':idClass', [ClassesController, 'getOneClass'])
+    router.get(':idClass', [ClassesController, 'getOneClass'])    
   })
   .prefix('/api/classes')
   
