@@ -8,3 +8,9 @@ export const onlyIdClassWithExistsValidator = vine.compile(
     }),
   })
 )
+
+export const getAllClassesValidator = vine.compile(
+  vine.object({
+    limit: vine.number().min(1).max(100).optional(),
+  })
+)

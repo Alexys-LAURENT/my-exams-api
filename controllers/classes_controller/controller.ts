@@ -2,7 +2,7 @@ import Class from '#models/class'
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import { onlyIdClassWithExistsValidator } from './validator.js'
+import { onlyIdClassWithExistsValidator, getAllClassesValidator } from './validator.js'
 
 export default class ClassesController extends AbstractController {
   constructor() {
@@ -22,8 +22,9 @@ export default class ClassesController extends AbstractController {
   }
 
   
-  public async getAll({}: HttpContext) {
-    const classes = await Class.all()
+  public async getAll({ request }: HttpContext) {
+    const { limit = 5 } = await request.validateUsing(getAllClassesValidator)
+    const classes = await Class.query().limit(limit)
     return this.buildJSONResponse({ data: classes })
   }
 }
