@@ -38,5 +38,6 @@ router
 router
   .group(() => {
     router.get(':idClass', [ClassesController, 'getOneClass'])
+    router.get('/:idClasse/degrees', [ClassesController, 'getPromosOfClass'])
   })
   .prefix('/api/classes')

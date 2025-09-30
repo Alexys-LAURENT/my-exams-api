@@ -20,4 +20,13 @@ export default class ClassesController extends AbstractController {
       data: theClass,
     })
   }
+
+  public async getPromosOfClass({ params }: HttpContext) {
+    const valid = await onlyIdClassWithExistsValidator.validate({ idClass: params.idClasse })
+    const theClass = await Class.findOrFail(valid.idClass)
+    await theClass.load('degree')
+    return this.buildJSONResponse({
+      data: theClass.degree
+    })
+  }
 }
