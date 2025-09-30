@@ -8,7 +8,7 @@ export default class StudentsController extends AbstractController {
     super()
   }
   
-  public async getStudentClass({ params }: HttpContext) {
+  public async getStudentClasses({ params }: HttpContext) {
     const valid = await onlyIdStudentWithExistsValidator.validate(params)
     const user = await User.findOrFail(valid.idStudent)
     const classes = await user.related('studentClasses').query()

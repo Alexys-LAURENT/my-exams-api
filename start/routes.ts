@@ -31,7 +31,6 @@ router
 
   router
   .group(() => {
-    router.get('/', [ClassesController, 'getAll'])
     router.get(':idClass', [ClassesController, 'getOneClass'])    
   })
   .prefix('/api/classes')
@@ -39,7 +38,7 @@ router
   
   router 
   .group(() => {
-    router.get(':idStudent/classes', [StudentsController, 'getStudentClass'])
+    router.get('/:idStudent/classes', [StudentsController, 'getStudentClasses'])
   })
   .prefix('/api/students')
   
