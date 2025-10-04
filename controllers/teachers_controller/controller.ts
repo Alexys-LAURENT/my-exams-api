@@ -8,7 +8,7 @@ export default class TeachersController extends AbstractController {
   }
 
   public async getAll({}: HttpContext) {
-    const teachers = await User.findBy('account_type', 'teacher')
+    const teachers = await User.query().where('account_type', 'teacher')
     return this.buildJSONResponse({ data: teachers })
   }
 }
