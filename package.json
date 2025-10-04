@@ -69,7 +69,7 @@
   },
   "prettier": "@adonisjs/prettier-config",
   "volta": {
-    "node": "24.2.0",
+    "node": "20.18.3",
     "npm": "11.3.0"
   }
 }
