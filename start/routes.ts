@@ -11,6 +11,7 @@ import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 const ClassesController = () => import('../controllers/classes_controller/controller.js')
 const AuthController = () => import('../controllers/auth_controller/controller.js')
+const TeachersController = () => import('../controllers/teachers_controller/controller.js')
 
 /*
  █████  ██    ██ ████████ ██   ██ 
@@ -27,13 +28,15 @@ router
   })
   .prefix('/api/auth')
 
-
-  router
+router
   .group(() => {
     router.get('/', [ClassesController, 'getAll'])
     router.get(':idClass', [ClassesController, 'getOneClass'])
   })
   .prefix('/api/classes')
-  
 
-
+router
+  .group(() => {
+    router.get(':idTeacher/classes', [TeachersController, 'getAllClassesForOneTeacher'])
+  })
+  .prefix('/api/teachers')
