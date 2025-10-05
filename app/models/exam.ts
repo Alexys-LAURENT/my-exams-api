@@ -1,9 +1,10 @@
 import Class from '#models/class'
 import ExamGrade from '#models/exam_grade'
 import Question from '#models/question'
-import { BaseModel, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
-import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
+import User from './user.js'
 
 export default class Exam extends BaseModel {
   @column({ isPrimary: true, columnName: 'id_exam' })
@@ -17,6 +18,9 @@ export default class Exam extends BaseModel {
 
   @column()
   declare time: number
+
+  @column()
+  declare idTeacher: number
 
   @column({ columnName: 'image_path' })
   declare imagePath: string | null
@@ -46,4 +50,10 @@ export default class Exam extends BaseModel {
     foreignKey: 'idExam',
   })
   declare examGrades: HasMany<typeof ExamGrade>
+
+  @belongsTo(() => User, {
+    foreignKey: 'idTeacher',
+    localKey: 'idUser',
+  })
+  declare teacher: BelongsTo<typeof User>
 }

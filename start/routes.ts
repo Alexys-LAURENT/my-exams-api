@@ -27,13 +27,9 @@ router
   })
   .prefix('/api/auth')
 
-
-  router
+router
   .group(() => {
     router.get('/', [ClassesController, 'getAll'])
     router.get(':idClass', [ClassesController, 'getOneClass'])
   })
   .prefix('/api/classes')
-  
-
-
