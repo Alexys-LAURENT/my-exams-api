@@ -10,6 +10,7 @@
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
 const ClassesController = () => import('../controllers/classes_controller/controller.js')
+const DegreesController = () => import('../controllers/degrees_controller/controller.js')
 const AuthController = () => import('../controllers/auth_controller/controller.js')
 
 /*
@@ -38,6 +39,6 @@ router
 router
   .group(() => {
     router.get(':idClass', [ClassesController, 'getOneClass'])
-    router.get('/:idClasse/degrees', [ClassesController, 'getPromosOfClass'])
+    router.get('/:idClasse/degrees', [DegreesController, 'getPromosOfClass'])
   })
   .prefix('/api/classes')
