@@ -10,12 +10,8 @@ export const onlyIdClassWithExistsValidator = vine.compile(
   })  
 )
 
-export const onlyIdAdminAndClassWithExistsValidator = vine.compile(
+export const DeleteClassValidator = vine.compile(
   vine.object({
-    idAdmin: vine.string().exists(async (db, value) => {
-      const row = await db.from('users').where('id_user', value).andWhere('account_type', 'admin').first()
-      return !!row
-    }),
     idClass: vine.string().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()
       return !!row

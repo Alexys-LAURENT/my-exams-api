@@ -1,4 +1,4 @@
-import { onlyIdAdminAndClassWithExistsValidator } from './validator.js'
+import { DeleteClassValidator } from './validator.js'
 import Class from '#models/class'
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
@@ -22,16 +22,19 @@ export default class ClassesController extends AbstractController {
     })
   }
 
-  public async deleteIdClass({ params }: HttpContext) {
-    const valid = await onlyIdAdminAndClassWithExistsValidator.validate(params)
+  public async deleteIdClass({ params, auth, response }: HttpContext) {
+    // Vérifier que l'utilisateur est bien connecté
+    const user = auth.user
+    if (!user || user.accountType !== 'admin') {
+      return response.unauthorized({ message: 'Seuls les admins peuvent supprimer une classe.' })
+    }
+
+    const valid = await DeleteClassValidator.validate(params)
     const theClass = await Class.findOrFail(valid.idClass)
     await theClass.delete()
     return this.buildJSONResponse({
-      message: 'Class deleted successfully',
-      status: 200,
-      success: true,
+      data: theClass,
     })
   }
-
   
 }
