@@ -1,6 +1,6 @@
 import Class from '#models/class'
 import AbstractController from '../abstract_controller.js'
-import { getExamsOfClassParamsValidator } from './validator.js'
+import { getExamsOfClassParamsValidator, getExamsOfClassQueryValidator } from './validator.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
 
@@ -9,20 +9,47 @@ export default class ExamsController extends AbstractController {
     super()
   }
   
-  /**
-   * Récupère les examens d'une classe avec possibilité de filtrage par status et limite
-   * 
-   * @param params
-   * @param request 
-   * @param auth 
-   */
   public async getExamsOfClass({ params, request, auth }: HttpContext) {
 
-    const valid = await getExamsOfClassParamsValidator.validate({ idClass: params.idClass })
-    const theClass = await Class.findOrFail(valid.idClass)
+    const validParams = await getExamsOfClassParamsValidator.validate({ idClass: params.idClass })
+    const theClass = await Class.findOrFail(validParams.idClass)
 
-    const status = request.qs().status as 'completed' | 'pending' | 'comming' | undefined
-    const limit = request.qs().limit ? parseInt(request.qs().limit, 10) : undefined
+    const allowedQueryParams = ['status', 'limit']
+    const queryKeys = Object.keys(request.qs())
+    const invalidParams = queryKeys.filter(key => !allowedQueryParams.includes(key))
+    
+    if (invalidParams.length > 0) {
+      return this.buildJSONResponse({
+        success: false,
+        message: `Paramètres de requête invalides : ${invalidParams.join(', ')}. Paramètres autorisés : ${allowedQueryParams.join(', ')}`
+      })
+    }
+
+    const validQuery = await getExamsOfClassQueryValidator.validate({
+      status: request.qs().status,
+      limit: request.qs().limit
+    })
+
+    const status = validQuery.status as 'completed' | 'pending' | 'comming' | undefined
+    const limit = validQuery.limit ? parseInt(validQuery.limit, 10) : undefined
+
+    const validStatuses = ['completed', 'pending', 'comming']
+    if (status && !validStatuses.includes(status)) {
+      return this.buildJSONResponse({
+        success: false,
+        message: `Statut invalide. Les statuts autorisés sont : ${validStatuses.join(', ')}`
+      })
+    }
+
+    if (validQuery.limit !== undefined) {
+      const numLimit = parseFloat(validQuery.limit)
+      if (isNaN(numLimit) || !Number.isInteger(numLimit) || numLimit <= 0) {
+        return this.buildJSONResponse({
+          success: false,
+          message: "La limite doit être un nombre entier positif"
+        })
+      }
+    }
     
     let examsQuery = theClass.related('exams').query().pivotColumns(['start_date', 'end_date'])
     const userId = auth.user?.idUser
