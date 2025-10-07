@@ -5,8 +5,8 @@ export default class AddDatesToExamsClasses extends BaseSchema {
 
   public async up() {
     this.schema.alterTable(this.tableName, (table) => {
-      table.timestamp('start_date').nullable()
-      table.timestamp('end_date').nullable()
+      table.timestamp('start_date')
+      table.timestamp('end_date')
     })
   }
 
