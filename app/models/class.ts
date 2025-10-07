@@ -36,6 +36,7 @@ export default class Class extends BaseModel {
     pivotForeignKey: 'id_class',
     relatedKey: 'idExam',
     pivotRelatedForeignKey: 'id_exam',
+    pivotColumns: ['start_date', 'end_date'],
   })
   declare exams: ManyToMany<typeof Exam>
 
