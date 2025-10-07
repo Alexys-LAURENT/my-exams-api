@@ -21,7 +21,7 @@ export default class ExamsController extends AbstractController {
     if (invalidParams.length > 0) {
       return this.buildJSONResponse({
         success: false,
-        message: `Paramètres de requête invalides : ${invalidParams.join(', ')}. Paramètres autorisés : ${allowedQueryParams.join(', ')}`
+        message: `Paramètres de requête invalides : ${invalidParams.join(', ')}.`
       })
     }
 
