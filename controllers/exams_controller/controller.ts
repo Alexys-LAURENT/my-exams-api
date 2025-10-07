@@ -8,7 +8,7 @@ export default class ExamsController extends AbstractController {
   constructor() {
     super()
   }
-
+  /*
   public async getExamsOfClass({ params, request, auth }: HttpContext) {
     const valid = await onlyIdClassWithExistsValidator.validate({ idClass: params.idClass })
     const theClass = await Class.findOrFail(valid.idClass)
@@ -71,4 +71,5 @@ export default class ExamsController extends AbstractController {
 
     return this.buildJSONResponse({ data: exams })
   }
+*/
 }

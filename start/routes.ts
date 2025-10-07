@@ -32,6 +32,8 @@ router
   .group(() => {
     router.get('/', [ClassesController, 'getAll'])
     router.get(':idClass', [ClassesController, 'getOneClass'])
+    /*
     router.get(':idClass/exams', [ExamsController, 'getExamsOfClass']).middleware([middleware.auth()])
+    */
   })
   .prefix('/api/classes')
