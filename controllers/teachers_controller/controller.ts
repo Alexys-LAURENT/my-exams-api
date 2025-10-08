@@ -3,7 +3,7 @@ import Class from '#models/class'
 import type { HttpContext } from '@adonisjs/core/http'
 import { classTeacherAssociationValidator } from '../teachers_controller/validator.js'
 
-export default class StudentsController extends AbstractController {
+export default class TeachersController extends AbstractController {
   constructor() {
     super()
   }
