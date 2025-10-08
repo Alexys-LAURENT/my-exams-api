@@ -32,9 +32,14 @@ router
 
 router
   .group(() => {
-    router.get('/', [ClassesController, 'getAll'])
     router.get(':idClass', [ClassesController, 'getOneClass'])
     router.get('/:idClasse/degrees', [DegreesController, 'getPromosOfClass'])
     router.get('/:idClass/students', [StudentsController, 'getStudentsOfClass'])
   })
   .prefix('/api/classes')
+
+router
+  .group(() => {
+    router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
+  })
+  .prefix('/api/students')
