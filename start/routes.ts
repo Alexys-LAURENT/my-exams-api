@@ -43,3 +43,9 @@ router
     router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
   })
   .prefix('/api/students')
+
+router
+  .group(() => {
+    router.get('/:idExam/questions/:idQuestion', [ExamsController, 'getQuestionsByIdForOneExam'])
+  })
+  .prefix('/api/exams')
