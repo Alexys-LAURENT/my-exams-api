@@ -32,5 +32,6 @@ router
   .group(() => {
     router.get('/', [ClassesController, 'getAll'])
     router.get(':idClass', [ClassesController, 'getOneClass'])
+    router.put(':idClass/exams/:idExam', [ExamsController, 'putExamsForClass']).use(middleware.auth())
   })
   .prefix('/api/classes')
