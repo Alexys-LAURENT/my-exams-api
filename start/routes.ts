@@ -14,6 +14,7 @@ const DegreesController = () => import('../controllers/degrees_controller/contro
 const StudentsController = () => import('../controllers/students_controller/controller.js')
 const ExamsController = () => import('../controllers/exams_controller/controller.js')
 const AuthController = () => import('../controllers/auth_controller/controller.js')
+const AnswersController = () => import('../controllers/answers_controller/controller.js')
 
 /*
  █████  ██    ██ ████████ ██   ██ 
@@ -43,3 +44,12 @@ router
     router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
   })
   .prefix('/api/students')
+
+router
+  .group(() => {
+    router.get('/:idExam/questions/:idQuestion/answers', [
+      AnswersController,
+      'getAnswersByQuestionsForExam',
+    ])
+  })
+  .prefix('/api/exams')
