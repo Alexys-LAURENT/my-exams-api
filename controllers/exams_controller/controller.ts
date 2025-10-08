@@ -4,5 +4,4 @@ export default class ExamsController extends AbstractController {
   constructor() {
     super()
   }
-  
 }
