@@ -3,7 +3,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
 import { onlyIdExamWithExistsValidator } from './validator.js'
 
-export default class TeachersController extends AbstractController {
+export default class ExamsController extends AbstractController {
   constructor() {
     super()
   }
