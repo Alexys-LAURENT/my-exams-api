@@ -37,6 +37,6 @@ router
 
 router
   .group(() => {
-    router.get(':idTeacher/classes', [TeachersController, 'getAllClassesForOneTeacher'])
+    router.get(':idTeacher/classes', [ClassesController, 'getAllClassesForOneTeacher'])
   })
   .prefix('/api/teachers')
