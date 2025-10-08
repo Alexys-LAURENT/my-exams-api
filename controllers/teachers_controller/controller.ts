@@ -35,7 +35,7 @@ export default class TeachersController extends AbstractController {
       await classInstance.related('teachers').attach([idTeacher])
 
       return this.buildJSONResponse({
-        message: 'Professeur ajouté à la classe avec succès'
+        message: 'Professeur associé à la classe avec succès'
       })
     } catch (error) {
       console.error(error)
