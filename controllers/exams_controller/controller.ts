@@ -16,6 +16,7 @@ export default class ExamController extends AbstractController {
       desc: content.desc,
       time: content.time,
       imagePath: content.imagePath ?? null,
+      idTeacher: content.idTeacher,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     })

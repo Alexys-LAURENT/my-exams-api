@@ -6,5 +6,6 @@ export const createExamValidator = vine.compile(
     desc: vine.string().trim().maxLength(255),
     time: vine.number().min(0),
     imagePath: vine.string().optional(),
+    idTeacher: vine.number().min(0),
   })
 )
