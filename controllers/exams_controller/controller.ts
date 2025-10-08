@@ -25,13 +25,14 @@ export default class ExamsController extends AbstractController {
       const classInstance = await Class.findOrFail(idClass)
       
       await classInstance.load('exams', (query) => {
-        query.where('id_exam', idExam)
+        query.where('exams.id_exam', idExam)
       })
 
       if (classInstance.exams.length === 0) {
-        return response.badRequest(this.buildJSONResponse({
-          message: 'Cet examen n\'est pas associé à cette classe'
-        }))
+        // L'examen n'étant pas associé, on considère que c'est déjà "supprimé"
+        return this.buildJSONResponse({
+          message: 'Examen déjà dissocié de la classe ou jamais associé'
+        })
       }
 
       if (user.accountType === 'teacher') {
