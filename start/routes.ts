@@ -12,6 +12,7 @@ import { middleware } from './kernel.js'
 const ClassesController = () => import('../controllers/classes_controller/controller.js')
 const ExamsController = () => import('../controllers/exams_controller/controller.js')
 const AuthController = () => import('../controllers/auth_controller/controller.js')
+const TeachersController = () => import('../controllers/teachers_controller/controller.js')
 
 /*
  █████  ██    ██ ████████ ██   ██ 
@@ -32,5 +33,6 @@ router
   .group(() => {
     router.get('/', [ClassesController, 'getAll'])
     router.get(':idClass', [ClassesController, 'getOneClass'])
+    router.put(':idClass/teachers/:idTeacher', [TeachersController, 'putTeacherToClass']).use(middleware.auth())
   })
   .prefix('/api/classes')
