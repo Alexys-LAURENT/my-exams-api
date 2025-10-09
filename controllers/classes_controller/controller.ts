@@ -1,11 +1,11 @@
 import { DeleteClassValidator } from './validator.js'
 import Class from '#models/class'
+import User from '#models/user'
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import { onlyIdClassWithExistsValidator } from './validator.js'
 import UnauthorizedException from '#exceptions/un_authorized_exception'
-
+import { onlyIdClassWithExistsValidator, onlyIdStudentWithExistsValidator } from './validator.js'
 
 export default class ClassesController extends AbstractController {
   constructor() {
@@ -39,5 +39,12 @@ export default class ClassesController extends AbstractController {
     return this.buildJSONResponse({
       data: theClass,
     })
+  }
+}
+  public async getStudentClasses({ params }: HttpContext) {
+    const valid = await onlyIdStudentWithExistsValidator.validate(params)
+    const user = await User.findOrFail(valid.idStudent)
+    const classes = await user.related('studentClasses').query()
+    return this.buildJSONResponse({ data: classes })
   }
 }

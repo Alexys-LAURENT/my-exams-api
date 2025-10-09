@@ -1,6 +1,6 @@
 import AbstractController from '../abstract_controller.js'
 
-export default class UsersReponsesController extends AbstractController {
+export default class QuestionsController extends AbstractController {
   constructor() {
     super()
   }
