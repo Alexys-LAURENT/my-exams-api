@@ -52,5 +52,6 @@ router
  router.get('/', [TeachersController, 'getAll'])
  router.get(':idTeacher', [TeachersController, 'getOneTeacher'])
  router.post('/', [TeachersController, 'createTeacher'])
+ router.get('/:idTeacher/exams', [ExamsController, 'getAllExamsForOneTeacher'])
   })
   .prefix('/api/teachers')
