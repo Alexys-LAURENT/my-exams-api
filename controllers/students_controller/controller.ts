@@ -1,9 +1,9 @@
 import Class from '#models/class'
 import User from '#models/user'
+import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
 import { onlyIdClassWithExistsValidator } from '../classes_controller/validator.js'
 import { createStudentValidator } from '../students_controller/validator.js'
-import type { HttpContext } from '@adonisjs/core/http'
 
 export default class StudentsController extends AbstractController {
   constructor() {

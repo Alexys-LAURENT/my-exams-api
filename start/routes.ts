@@ -50,18 +50,15 @@ router
 
 router
   .group(() => {
- router.get('/', [TeachersController, 'getAll'])
- router.get(':idTeacher', [TeachersController, 'getOneTeacher'])
- router.post('/', [TeachersController, 'createTeacher'])
- router.get('/:idTeacher/exams', [ExamsController, 'getAllExamsForOneTeacher'])
+    router.get('/', [TeachersController, 'getAll'])
+    router.get(':idTeacher', [TeachersController, 'getOneTeacher'])
+    router.post('/', [TeachersController, 'createTeacher'])
+    router.get('/:idTeacher/exams', [ExamsController, 'getAllExamsForOneTeacher'])
   })
   .prefix('/api/teachers')
-
 
 router
   .group(() => {
     router.get('/:idExam/questions/count', [QuestionsController, 'getQuestionsCountForOneExam'])
   })
   .prefix('/api/exams')
-
-

@@ -7,7 +7,7 @@ export const createTeacherValidator = vine.compile(
     email: vine.string().email().trim(),
     password: vine.string().minLength(6),
     avatarPath: vine.string().optional(),
-   })
+  })
 )
 
 export const onlyIdTeacherWithExistsValidator = vine.compile(
@@ -22,4 +22,3 @@ export const onlyIdTeacherWithExistsValidator = vine.compile(
     }),
   })
 )
-

@@ -20,7 +20,7 @@ export default class TeachersController extends AbstractController {
     })
     return this.buildJSONResponse({ data: teacher })
   }
-  
+
   public async getOneTeacher({ params }: HttpContext) {
     const valid = await onlyIdTeacherWithExistsValidator.validate(params)
     const theTeacher = await User.findOrFail(valid.idTeacher)
@@ -33,5 +33,4 @@ export default class TeachersController extends AbstractController {
     const teachers = await User.query().where('account_type', 'teacher')
     return this.buildJSONResponse({ data: teachers })
   }
-
 }
