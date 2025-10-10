@@ -11,48 +11,20 @@ export default class ExamsController extends AbstractController {
   
   public async getExamsOfClass({ params, request, auth }: HttpContext) {
 
-    const validParams = await getExamsOfClassParamsValidator.validate({ idClass: params.idClass })
+    const validParams = await getExamsOfClassParamsValidator.validate(params)
+
     const theClass = await Class.findOrFail(validParams.idClass)
 
-    const allowedQueryParams = ['status', 'limit']
-    const queryKeys = Object.keys(request.qs())
-    const invalidParams = queryKeys.filter(key => !allowedQueryParams.includes(key))
-    
-    if (invalidParams.length > 0) {
-      return this.buildJSONResponse({
-        success: false,
-        message: `Paramètres de requête invalides : ${invalidParams.join(', ')}.`
-      })
-    }
+    const validQuery = await getExamsOfClassQueryValidator.validate(request.qs())
 
-    const validQuery = await getExamsOfClassQueryValidator.validate({
-      status: request.qs().status,
-      limit: request.qs().limit
-    })
-
-    const status = validQuery.status as 'completed' | 'pending' | 'comming' | undefined
-    const limit = validQuery.limit ? parseInt(validQuery.limit, 10) : undefined
-
-    const validStatuses = ['completed', 'pending', 'comming']
-    if (status && !validStatuses.includes(status)) {
-      return this.buildJSONResponse({
-        success: false,
-        message: `Statut invalide. Les statuts autorisés sont : ${validStatuses.join(', ')}`
-      })
-    }
-
-    if (validQuery.limit !== undefined) {
-      const numLimit = parseFloat(validQuery.limit)
-      if (isNaN(numLimit) || !Number.isInteger(numLimit) || numLimit <= 0) {
-        return this.buildJSONResponse({
-          success: false,
-          message: "La limite doit être un nombre entier positif"
-        })
-      }
-    }
+    const { status, limit } = validQuery
     
     let examsQuery = theClass.related('exams').query().pivotColumns(['start_date', 'end_date'])
-    const userId = auth.user?.idUser
+
+    const user = await auth.authenticate()
+
+    const userId = user.idUser
+
     const today = DateTime.now().toSQL()
 
     if (status && userId) {
@@ -88,7 +60,8 @@ export default class ExamsController extends AbstractController {
       }
     }
 
-    if (limit) {
+   
+    if (limit !== null) {
       examsQuery.limit(limit)
     }
     

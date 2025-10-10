@@ -3,8 +3,10 @@ import vine from '@vinejs/vine'
 
 export const getExamsOfClassQueryValidator = vine.compile(
   vine.object({
-    status: vine.string().optional(),
-    limit: vine.string().optional()
+    status: vine.enum(['completed', 'pending', 'comming']).optional(),
+    limit: vine.number().min(1).optional().transform((value) => {
+      return value === undefined ? null : value
+    })
   })
 )
 
