@@ -17,7 +17,6 @@ export default class TeachersController extends AbstractController {
     if (content.name) teacher.name = content.name
     if (content.email) teacher.email = content.email
     if (content.avatarPath) teacher.avatarPath = content.avatarPath
-    if (content.password) teacher.password = content.password
 
     await teacher.save()
 
