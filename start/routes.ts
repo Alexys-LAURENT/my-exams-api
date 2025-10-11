@@ -16,6 +16,8 @@ const ExamsController = () => import('../controllers/exams_controller/controller
 const AuthController = () => import('../controllers/auth_controller/controller.js')
 const QuestionsController = () => import('../controllers/questions_controller/controller.js')
 const TeachersController = () => import('../controllers/teachers_controller/controller.js')
+const UsersResponsesController = () =>
+  import('../controllers/users_responses_controller/controller.js')
 
 /*
  █████  ██    ██ ████████ ██   ██ 
@@ -62,3 +64,9 @@ router
     router.get('/:idExam/questions/count', [QuestionsController, 'getQuestionsCountForOneExam'])
   })
   .prefix('/api/exams')
+
+router
+  .group(() => {
+    router.post('/', [UsersResponsesController, 'createUsersResponse'])
+  })
+  .prefix('/api/users_responses')
