@@ -27,10 +27,21 @@ export default class ClassesController extends AbstractController {
     return this.buildJSONResponse({ data: classes })
   }
 
-  public async getAllClassesForOneTeacher({ params }: HttpContext) {
+  public async getAllClassesForOneTeacher({ params, request }: HttpContext) {
     const valid = await onlyIdTeacherWithExistsValidator.validate(params)
     const theTeacher = await User.findOrFail(valid.idTeacher)
-    const classes = await theTeacher.related('teacherClasses').query().orderBy('start_date', 'desc')
+    const { limit: limitParam } = request.qs() as { limit?: string }
+    let classes
+    if (limitParam != null && limitParam !== undefined) {
+      const limit = parseInt(limitParam, 10)
+      classes = await theTeacher
+        .related('teacherClasses')
+        .query()
+        .orderBy('start_date', 'desc')
+        .limit(limit)
+    } else {
+      classes = await theTeacher.related('teacherClasses').query().orderBy('start_date', 'desc')
+    }
     return this.buildJSONResponse({
       data: classes,
     })
