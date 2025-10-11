@@ -9,3 +9,16 @@ export const createExamValidator = vine.compile(
     idTeacher: vine.number().min(0),
   })
 )
+
+export const onlyIdTeacherWithExistsValidator = vine.compile(
+  vine.object({
+    idTeacher: vine.number().exists(async (db, value) => {
+      const row = await db
+        .from('users')
+        .where('id_user', value)
+        .andWhere('account_type', 'teacher')
+        .first()
+      return row ? true : false
+    }),
+  })
+)
