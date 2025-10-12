@@ -5,6 +5,7 @@ import {
   createAnswerValidator,
   onlyIdQuestionWithExistsValidator,
   onlyIdExamWithExistsValidator,
+  examQuestionParamsValidator
 } from './validator.js'
 import { DateTime } from 'luxon'
 
@@ -26,8 +27,17 @@ export default class AnswersController extends AbstractController {
       idQuestion: validQuestion.idQuestion,
       idExam: validExam.idExam,
       createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
     })
     return this.buildJSONResponse({ data: answer })
   }
+  
+  public async getAnswersByQuestionsForExam({ params }: HttpContext) {
+    const { idExam, idQuestion } = await examQuestionParamsValidator.validate(params)
+    const answers = await Answer.query()
+      .where('id_question', idQuestion)
+      .andWhere('id_exam', idExam)
+      .select(['id_answer', 'answer', 'created_at', 'updated_at'])
+    return this.buildJSONResponse({ data: answers })
+  }
+  
 }

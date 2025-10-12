@@ -22,3 +22,12 @@ export const onlyIdTeacherWithExistsValidator = vine.compile(
     }),
   })
 )
+
+export const updateTeacherValidator = vine.compile(
+  vine.object({
+    lastName: vine.string().trim().maxLength(100).optional(),
+    name: vine.string().trim().maxLength(100).optional(),
+    email: vine.string().email().trim().optional(),
+    avatarPath: vine.string().optional(),
+  })
+)
