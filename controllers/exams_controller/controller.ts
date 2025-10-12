@@ -1,7 +1,7 @@
 import Exam from '#models/exam'
-import { HttpContext } from '@adonisjs/core/http'
+import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import { onlyIdExamWithExistsValidator } from './validator.js'
+import { onlyIdExamWithExistsValidator, onlyIdTeacherWithExistsValidator } from './validator.js'
 
 export default class ExamsController extends AbstractController {
   constructor() {
@@ -15,4 +15,11 @@ export default class ExamsController extends AbstractController {
       data: theExam,
     })
   }
+  
+  public async getAllExamsForOneTeacher({ params }: HttpContext) {
+    const valid = await onlyIdTeacherWithExistsValidator.validate(params)
+    const exams = await Exam.query().where('id_teacher', valid.idTeacher)
+    return this.buildJSONResponse({ data: exams })
+  }
+  
 }
