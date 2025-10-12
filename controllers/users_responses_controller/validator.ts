@@ -37,6 +37,5 @@ export const createUsersResponseValidator = vine.compile(
     idUser: vine.number().positive(),
     idQuestion: vine.number().positive(),
     idExam: vine.number().positive(),
-    idAnswer: vine.number().positive().optional(),
   })
 )

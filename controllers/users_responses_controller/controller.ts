@@ -25,7 +25,6 @@ export default class UsersResponsesController extends AbstractController {
       idUser: validStudent.idUser,
       idQuestion: validQuestion.idQuestion,
       idExam: validExam.idExam,
-      idAnswer: content.idAnswer || null,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     })

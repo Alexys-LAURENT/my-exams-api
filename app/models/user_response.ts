@@ -21,9 +21,6 @@ export default class UserResponse extends BaseModel {
   @column({ columnName: 'id_exam' })
   declare idExam: number
 
-  @column({ columnName: 'id_answer' })
-  declare idAnswer: number | null
-
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 
