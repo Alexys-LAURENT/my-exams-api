@@ -21,3 +21,9 @@ export const onlyIdTeacherWithExistsValidator = vine.compile(
     }),
   })
 )
+
+export const limitQueryValidator = vine.compile(
+  vine.object({
+    limit: vine.number().min(1).optional(),
+  })
+)
