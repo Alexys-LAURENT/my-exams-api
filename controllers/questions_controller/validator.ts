@@ -17,6 +17,5 @@ export const createQuestionValidator = vine.compile(
     isMultiple: vine.boolean(),
     isQcm: vine.boolean(),
     maxPoints: vine.number().min(0),
-    idExam: vine.number().min(0),
   })
 )

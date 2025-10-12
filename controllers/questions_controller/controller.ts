@@ -15,9 +15,9 @@ export default class QuestionsController extends AbstractController {
     return this.buildJSONResponse({ data: questionsCount[0].$extras.total })
   }
 
-  public async createQuestion({ request }: HttpContext) {
+  public async createQuestion({ params, request }: HttpContext) {
+    const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: params.idExam })
     const content = await createQuestionValidator.validate(request.body())
-    const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: content.idExam })
     const question = await Question.create({
       idQuestion: content.idQuestion,
       title: content.title,
