@@ -1,7 +1,11 @@
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import { createTeacherValidator, updateTeacherValidator, onlyIdTeacherWithExistsValidator } from './validator.js'
+import {
+  createTeacherValidator,
+  onlyIdTeacherWithExistsValidator,
+  updateTeacherValidator,
+} from './validator.js'
 
 export default class TeachersController extends AbstractController {
   constructor() {
@@ -22,13 +26,13 @@ export default class TeachersController extends AbstractController {
 
     return this.buildJSONResponse({ data: teacher })
   }
-  
+
   public async deleteTeacher({ params }: HttpContext) {
     const teacher = await onlyIdTeacherWithExistsValidator.validate(params)
     await User.query().where('id_user', teacher.idTeacher).delete()
     return this.buildJSONResponse({ message: 'Teacher deleted successfully' })
   }
-  
+
   public async createTeacher({ request }: HttpContext) {
     const content = await createTeacherValidator.validate(request.body())
     const teacher = await User.create({

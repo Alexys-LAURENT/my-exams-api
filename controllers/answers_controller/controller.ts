@@ -1,13 +1,13 @@
 import Answer from '#models/answer'
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
 import {
   createAnswerValidator,
-  onlyIdQuestionWithExistsValidator,
+  examQuestionParamsValidator,
   onlyIdExamWithExistsValidator,
-  examQuestionParamsValidator
+  onlyIdQuestionWithExistsValidator,
 } from './validator.js'
-import { DateTime } from 'luxon'
 
 export default class AnswersController extends AbstractController {
   constructor() {
@@ -30,7 +30,7 @@ export default class AnswersController extends AbstractController {
     })
     return this.buildJSONResponse({ data: answer })
   }
-  
+
   public async getAnswersByQuestionsForExam({ params }: HttpContext) {
     const { idExam, idQuestion } = await examQuestionParamsValidator.validate(params)
     const answers = await Answer.query()
@@ -39,5 +39,4 @@ export default class AnswersController extends AbstractController {
       .select(['id_answer', 'answer', 'created_at', 'updated_at'])
     return this.buildJSONResponse({ data: answers })
   }
-  
 }

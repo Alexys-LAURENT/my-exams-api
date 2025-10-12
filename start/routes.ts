@@ -17,7 +17,6 @@ const AuthController = () => import('../controllers/auth_controller/controller.j
 const AnswersController = () => import('../controllers/answers_controller/controller.js')
 const QuestionsController = () => import('../controllers/questions_controller/controller.js')
 const TeachersController = () => import('../controllers/teachers_controller/controller.js')
-const AnswersController = () => import('../controllers/answers_controller/controller.js')
 
 /*
  █████  ██    ██ ████████ ██   ██ 
@@ -71,7 +70,7 @@ router
     ])
     router.get('/:idExam/questions/:idQuestion/answers', [
       AnswersController,
-      'getAnswersByQuestionsForExam'
+      'getAnswersByQuestionsForExam',
     ])
     router.post('/:idExam/start', [ExamsController, 'startExam']).use(middleware.auth())
     router.post('/', [ExamsController, 'createExam'])
