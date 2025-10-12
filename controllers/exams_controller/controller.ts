@@ -5,13 +5,21 @@ import ExamGrade from '#models/exam_grade'
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
-import { onlyIdTeacherWithExistsValidator, startExamValidator } from './validator.js'
+import { onlyIdTeacherWithExistsValidator, startExamValidator, onlyIdExamWithExistsValidator } from './validator.js'
 
 export default class ExamsController extends AbstractController {
   constructor() {
     super()
   }
 
+  public async getOneExam({ params }: HttpContext) {
+    const valid = await onlyIdExamWithExistsValidator.validate(params)
+    const theExam = await Exam.findOrFail(valid.idExam)
+    return this.buildJSONResponse({
+      data: theExam,
+    })
+  }
+  
   public async getAllExamsForOneTeacher({ params }: HttpContext) {
     const valid = await onlyIdTeacherWithExistsValidator.validate(params)
     const exams = await Exam.query().where('id_teacher', valid.idTeacher)
@@ -63,4 +71,5 @@ export default class ExamsController extends AbstractController {
 
     return this.buildJSONResponse({ message: 'Exam started' })
   }
+  
 }
