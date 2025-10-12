@@ -1,8 +1,7 @@
-import Evaluation from '#models/evaluation'
 import Exam from '#models/exam'
 import User from '#models/user'
-import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
+import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 
 export default class ExamGrade extends BaseModel {
@@ -10,7 +9,7 @@ export default class ExamGrade extends BaseModel {
   declare idExamGrade: number
 
   @column()
-  declare note: number
+  declare note: number | null
 
   @column()
   declare status: 'en cours' | 'à corrigé' | 'corrigé'
@@ -36,9 +35,4 @@ export default class ExamGrade extends BaseModel {
     foreignKey: 'idExam',
   })
   declare exam: BelongsTo<typeof Exam>
-
-  @hasMany(() => Evaluation, {
-    foreignKey: 'idExamGrade',
-  })
-  declare evaluations: HasMany<typeof Evaluation>
 }
