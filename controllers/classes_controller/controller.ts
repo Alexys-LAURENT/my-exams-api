@@ -34,9 +34,9 @@ export default class ClassesController extends AbstractController {
   public async getAllClassesForOneTeacher({ params, request }: HttpContext) {
     const valid = await onlyIdTeacherWithExistsValidator.validate(params)
     const theTeacher = await User.findOrFail(valid.idTeacher)
-    const { limit } = await request.validateUsing(limitQueryValidator)
+    const { limit } = await limitQueryValidator.validate(request.qs())
     const query = theTeacher.related('teacherClasses').query().orderBy('start_date', 'desc')
-    if (typeof limit === 'number') {
+    if (limit) {
       query.limit(limit)
     }
     const classes = await query
