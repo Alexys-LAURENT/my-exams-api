@@ -61,11 +61,6 @@ router
 router
   .group(() => {
     router.get('/:idExam/questions/count', [QuestionsController, 'getQuestionsCountForOneExam'])
+    router.post('/:idExam/questions/:idQuestion/answers', [AnswersController, 'createAnswers'])
   })
   .prefix('/api/exams')
-
-router
-  .group(() => {
-    router.post('/', [AnswersController, 'createAnswers'])
-  })
-  .prefix('/api/answers')

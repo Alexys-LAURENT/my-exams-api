@@ -23,7 +23,5 @@ export const createAnswerValidator = vine.compile(
     idAnswer: vine.number().positive(),
     answer: vine.string().trim().maxLength(255),
     isCorrect: vine.boolean(),
-    idQuestion: vine.number().positive(),
-    idExam: vine.number().positive(),
   })
 )

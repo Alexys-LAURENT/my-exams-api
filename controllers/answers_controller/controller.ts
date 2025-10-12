@@ -13,12 +13,12 @@ export default class AnswersController extends AbstractController {
     super()
   }
 
-  public async createAnswers({ request }: HttpContext) {
-    const content = await createAnswerValidator.validate(request.body())
+  public async createAnswers({ params, request }: HttpContext) {
+    const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: params.idExam })
     const validQuestion = await onlyIdQuestionWithExistsValidator.validate({
-      idQuestion: content.idQuestion,
+      idQuestion: params.idQuestion,
     })
-    const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: content.idExam })
+    const content = await createAnswerValidator.validate(request.body())
     const answer = await Answer.create({
       idAnswer: content.idAnswer,
       answer: content.answer,
