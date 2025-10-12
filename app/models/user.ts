@@ -8,6 +8,7 @@ import hash from '@adonisjs/core/services/hash'
 import { BaseModel, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
+import Exam from './exam.js'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -51,6 +52,11 @@ export default class User extends compose(BaseModel, AuthFinder) {
     foreignKey: 'idUser',
   })
   declare userResponses: HasMany<typeof UserResponse>
+
+  @hasMany(() => Exam, {
+    foreignKey: 'idTeacher',
+  })
+  declare teacherExams: HasMany<typeof Exam>
 
   @manyToMany(() => Class, {
     pivotTable: 'students_classes',
