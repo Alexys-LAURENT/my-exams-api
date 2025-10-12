@@ -72,5 +72,6 @@ router
       AnswersController,
       'getAnswersByQuestionsForExam'
     ])
+    router.post('/:idExam/start', [ExamsController, 'startExam']).use(middleware.auth())
   })
   .prefix('/api/exams')
