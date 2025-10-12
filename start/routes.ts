@@ -60,5 +60,6 @@ router
 router
   .group(() => {
     router.get('/:idExam/questions/count', [QuestionsController, 'getQuestionsCountForOneExam'])
+    router.post('/:idExam/start', [ExamsController, 'startExam']).use(middleware.auth())
   })
   .prefix('/api/exams')
