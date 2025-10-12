@@ -14,3 +14,13 @@ export const createDegreeValidator = vine.compile(
     name: vine.string().minLength(2).maxLength(100).trim(),
   })
 )
+
+
+export const idDegreeExistsValidator = vine.compile(
+  vine.object({
+    idDegree: vine.string().exists(async (db, value) => {
+      const row = await db.from('degrees').where('id_degree', value).first()
+      return row ? true : false
+    }),
+  })
+)
