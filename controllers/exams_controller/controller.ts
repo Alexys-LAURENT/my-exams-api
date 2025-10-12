@@ -67,6 +67,15 @@ export default class ExamsController extends AbstractController {
     
     const exams = await examsQuery
     
-    return this.buildJSONResponse({ data: exams })
+    const serializedExams = exams.map((exam) => {
+      return {
+        ...exam.toJSON(),
+
+        start_date: exam.$extras.pivot_start_date,
+        end_date: exam.$extras.pivot_end_date
+      }
+    })
+    
+    return this.buildJSONResponse({ data: serializedExams })
   }
 }
