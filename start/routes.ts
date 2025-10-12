@@ -62,5 +62,6 @@ router
 router
   .group(() => {
     router.get('/:idExam/questions/count', [QuestionsController, 'getQuestionsCountForOneExam'])
+    router.get(':idExam', [ExamsController, 'getOneExam'])
   })
   .prefix('/api/exams')
