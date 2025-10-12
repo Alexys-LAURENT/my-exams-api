@@ -15,7 +15,7 @@ export const classAndExamParamsValidator = vine.compile(
 
 export const examDateValidator = vine.compile(
   vine.object({
-    start_date: vine.string(),
-    end_date: vine.string()
+    start_date: vine.date({ formats: ['yyyy-MM-ddTHH:mm:ssZ'] }),
+    end_date: vine.date({ formats: ['yyyy-MM-ddTHH:mm:ssZ'] })
   })
 )

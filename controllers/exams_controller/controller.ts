@@ -3,83 +3,49 @@ import Exam from '#models/exam'
 import AbstractController from '../abstract_controller.js'
 import { classAndExamParamsValidator, examDateValidator } from './validator.js'
 import type { HttpContext } from '@adonisjs/core/http'
+import UnauthorizedException from '#exceptions/un_authorized_exception'
 
 export default class ExamsController extends AbstractController {
   constructor() {
     super()
   }
 
-  async putExamsForClass({ params, request, response, auth }: HttpContext) {
-    try {
+  async putExamsForClass({ params, request, auth }: HttpContext) {
       const user = auth.user
       if (user?.accountType !== 'teacher' && user?.accountType !== 'admin') {
-        return response.forbidden(this.buildJSONResponse({
-          message: 'Seuls les professeurs peuvent ajouter des examens aux classes',
-        }))
+        throw new UnauthorizedException('Seuls les professeurs peuvent ajouter des examens aux classes')
       }
 
       const validatedParams = await classAndExamParamsValidator.validate(params)
+
       const { idClass, idExam } = validatedParams
 
-      const classInstance = await Class.query()
-        .where('id_class', idClass)
-        .preload('exams', (query) => {
-          query.where('exams.id_exam', idExam)
-        })
-        .firstOrFail()
-
-      if (classInstance.exams.length > 0) {
-        return response.badRequest(this.buildJSONResponse({
-          message: 'Cet examen est déjà associé à cette classe',
-        }))
-      }
+      // Récupérer la classe sans vérifier l'association existante
+      const classInstance = await Class.findOrFail(idClass)
 
       const exam = await Exam.findOrFail(idExam)
       if (exam.idTeacher !== user?.idUser) {
-        return response.forbidden(this.buildJSONResponse({
-          message: 'Vous ne pouvez ajouter que vos propres examens aux classes',
-        }))
+        throw new UnauthorizedException('Vous ne pouvez ajouter que vos propres examens aux classes')
       }
 
-      // Valider les données du corps de la requête
       const bodyData = await examDateValidator.validate(request.body())
 
-      // Vérifier que les dates sont fournies
-      if (!bodyData.start_date || !bodyData.end_date) {
-        return response.badRequest(this.buildJSONResponse({
-          message: 'Les dates de début et de fin sont requises',
-        }))
-      }
+      // Les dates sont maintenant des objets Date JavaScript
+      // Nous devons les convertir en format SQL pour l'ORM
+      const startDate = bodyData.start_date.toISOString()
+      const endDate = bodyData.end_date.toISOString()
 
       // Ajouter l'examen à la classe avec les dates pivot
       await classInstance.related('exams').attach({
         [idExam]: {
-          start_date: bodyData.start_date,
-          end_date: bodyData.end_date,
+          start_date: startDate,
+          end_date: endDate,
         },
       })
 
       return this.buildJSONResponse({
         message: 'Examen ajouté à la classe avec succès',
-        data: {
-          idClass,
-          idExam,
-          start_date: bodyData.start_date,
-          end_date: bodyData.end_date,
-        },
       })
-    } catch (error) {
-      if (error.code === 'E_ROW_NOT_FOUND') {
-        return response.notFound(this.buildJSONResponse({
-          message: 'Classe ou examen non trouvé',
-        }))
-      }
-
-      console.error(error)
-      return response.internalServerError(this.buildJSONResponse({
-        message: 'Erreur interne du serveur',
-      }))
-    }
   }
 }
  
