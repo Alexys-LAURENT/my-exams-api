@@ -13,24 +13,26 @@ export const onlyIdTeacherWithExistsValidator = vine.compile(
   })
 )
 
-export const onlyIdStudentWithExistsValidator = vine.compile(
+export const checkStatusValidator = vine.compile(
   vine.object({
-    idStudent: vine.number().exists(async (db, value) => {
-      const row = await db
-        .from('users')
-        .where('id_user', value)
-        .andWhere('account_type', 'student')
-        .first()
-      return row ? true : false
-    }),
-  })
-)
+    idStudent: vine
+      .number()
+      .positive()
+      .exists(async (db, value) => {
+        const row = await db
+          .from('users')
+          .where('id_user', value)
+          .andWhere('account_type', 'student')
+          .first()
+        return !!row
+      }),
 
-export const onlyIdExamWithExistsValidator = vine.compile(
-  vine.object({
-    idExam: vine.number().exists(async (db, value) => {
-      const row = await db.from('exams').where('id_exam', value).first()
-      return row ? true : false
-    }),
+    idExam: vine
+      .number()
+      .positive()
+      .exists(async (db, value) => {
+        const row = await db.from('exams').where('id_exam', value).first()
+        return !!row
+      }),
   })
 )

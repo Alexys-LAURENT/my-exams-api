@@ -2,11 +2,7 @@ import Exam from '#models/exam'
 import ExamGrade from '#models/exam_grade'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import {
-  onlyIdTeacherWithExistsValidator,
-  onlyIdStudentWithExistsValidator,
-  onlyIdExamWithExistsValidator,
-} from './validator.js'
+import { onlyIdTeacherWithExistsValidator, checkStatusValidator } from './validator.js'
 
 export default class ExamsController extends AbstractController {
   constructor() {
@@ -20,14 +16,11 @@ export default class ExamsController extends AbstractController {
   }
 
   public async getExamGradeForOneStudent({ params }: HttpContext) {
-    const validStudent = await onlyIdStudentWithExistsValidator.validate({
-      idStudent: params.idStudent,
-    })
-    const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: params.idExam })
+    const valid = await checkStatusValidator.validate(params)
     const examGrade = await ExamGrade.query()
-      .where('id_user', validStudent.idStudent)
-      .andWhere('id_exam', validExam.idExam)
+      .where('id_user', valid.idStudent)
+      .andWhere('id_exam', valid.idExam)
       .firstOrFail()
-    return this.buildJSONResponse({ data: examGrade })
+    return this.buildJSONResponse({ data: { status: !!examGrade } })
   }
 }
