@@ -39,6 +39,7 @@ router
     router.delete('/:idClass', [ClassesController, 'deleteIdClass']).use(middleware.auth())
     router.get('/:idClasse/degrees', [DegreesController, 'getPromosOfClass'])
     router.get('/:idClass/students', [StudentsController, 'getStudentsOfClass'])
+    router.put(':idClass/students/:idStudent', [StudentsController, 'putStudentToClass']).use(middleware.auth())
   })
   .prefix('/api/classes')
 
