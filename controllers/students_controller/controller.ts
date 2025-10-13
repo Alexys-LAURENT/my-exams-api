@@ -2,7 +2,8 @@ import Class from '#models/class'
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import { onlyIdClassWithExistsValidator, classStudentParamsValidator, createStudentValidator } from './validator.js'
+import { onlyIdStudentWithExistsValidator } from '../classes_controller/validator.js'
+import { onlyIdClassWithExistsValidator, classStudentParamsValidator, createStudentValidator, updateStudentValidator } from './validator.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import UnAuthorizedException from '#exceptions/un_authorized_exception'
 
@@ -21,6 +22,21 @@ export default class StudentsController extends AbstractController {
       avatarPath: content.avatarPath ?? null,
       accountType: 'student',
     })
+    return this.buildJSONResponse({ data: student })
+  }
+
+  public async updateStudent({ request, params }: HttpContext) {
+    const content = await updateStudentValidator.validate(request.body())
+    const valid = await onlyIdStudentWithExistsValidator.validate(params)
+    const student = await User.findOrFail(valid.idStudent)
+
+    if (content.lastName) student.lastName = content.lastName
+    if (content.name) student.name = content.name
+    if (content.email) student.email = content.email
+    if (content.avatarPath) student.avatarPath = content.avatarPath
+
+    await student.save()
+
     return this.buildJSONResponse({ data: student })
   }
 
