@@ -8,6 +8,8 @@ import hash from '@adonisjs/core/services/hash'
 import { BaseModel, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
+import Evaluation from './evaluation.js'
+import Exam from './exam.js'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -52,6 +54,11 @@ export default class User extends compose(BaseModel, AuthFinder) {
   })
   declare userResponses: HasMany<typeof UserResponse>
 
+  @hasMany(() => Exam, {
+    foreignKey: 'idTeacher',
+  })
+  declare teacherExams: HasMany<typeof Exam>
+
   @manyToMany(() => Class, {
     pivotTable: 'students_classes',
     localKey: 'idUser',
@@ -70,6 +77,16 @@ export default class User extends compose(BaseModel, AuthFinder) {
     pivotRelatedForeignKey: 'id_class',
   })
   declare teacherClasses: ManyToMany<typeof Class>
+
+  @hasMany(() => Evaluation, {
+    foreignKey: 'idTeacher',
+  })
+  declare teacherEvaluations: HasMany<typeof Evaluation>
+
+  @hasMany(() => Evaluation, {
+    foreignKey: 'idStudent',
+  })
+  declare studentEvaluations: HasMany<typeof Evaluation>
 
   static accessTokens = DbAccessTokensProvider.forModel(User)
 }
