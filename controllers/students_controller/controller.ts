@@ -25,7 +25,7 @@ export default class StudentsController extends AbstractController {
   public async deleteStudent({ params }: HttpContext) {
     const student = await onlyIdStudentWithExistsValidator.validate(params)
     await User.query().where('id_user', student.idStudent).delete()
-    return this.buildJSONResponse({ data: student })
+    return this.buildJSONResponse({ message: 'Student deleted successfully' })
   }
 
   public async getStudentsOfClass({ params }: HttpContext) {
