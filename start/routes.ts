@@ -40,12 +40,24 @@ router
     router.delete('/:idClass', [ClassesController, 'deleteIdClass']).use(middleware.auth())
     router.get('/:idClasse/degrees', [DegreesController, 'getPromosOfClass'])
     router.get('/:idClass/students', [StudentsController, 'getStudentsOfClass'])
-    router.put(':idClass/students/:idStudent', [StudentsController, 'putStudentToClass']).use(middleware.auth())
-    router.delete(':idClass/students/:idStudent', [StudentsController, 'deleteStudentFromClass']).use(middleware.auth())
-    router.delete(':idClass/exams/:idExam', [ExamsController, 'deleteExamFromClass']).use(middleware.auth())
-    router.put(':idClass/teachers/:idTeacher', [TeachersController, 'putTeacherToClass']).use(middleware.auth())
-    router.delete(':idClass/teachers/:idTeacher', [TeachersController, 'removeTeacherFromClass']).use(middleware.auth())
-    router.put(':idClass/exams/:idExam', [ExamsController, 'putExamsForClass']).use(middleware.auth())
+    router
+      .put(':idClass/students/:idStudent', [StudentsController, 'putStudentToClass'])
+      .use(middleware.auth())
+    router
+      .delete(':idClass/students/:idStudent', [StudentsController, 'deleteStudentFromClass'])
+      .use(middleware.auth())
+    router
+      .delete(':idClass/exams/:idExam', [ExamsController, 'deleteExamFromClass'])
+      .use(middleware.auth())
+    router
+      .put(':idClass/teachers/:idTeacher', [TeachersController, 'putTeacherToClass'])
+      .use(middleware.auth())
+    router
+      .delete(':idClass/teachers/:idTeacher', [TeachersController, 'removeTeacherFromClass'])
+      .use(middleware.auth())
+    router
+      .put(':idClass/exams/:idExam', [ExamsController, 'putExamsForClass'])
+      .use(middleware.auth())
   })
   .prefix('/api/classes')
 
