@@ -58,6 +58,7 @@ router
     router
       .put(':idClass/exams/:idExam', [ExamsController, 'putExamsForClass'])
       .use(middleware.auth())
+    router.get(':idClass/exams', [ExamsController, 'getExamsOfClass']).use(middleware.auth())
   })
   .prefix('/api/classes')
 
