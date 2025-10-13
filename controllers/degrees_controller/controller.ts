@@ -20,6 +20,18 @@ export default class DegreesController extends AbstractController {
     })
   }
 
+  public async getAll({ request, auth }: HttpContext) {
+    const user = auth.user
+    if (!user || user.accountType !== 'admin') {
+      throw new UnAuthorizedException('Seuls les administrateurs peuvent accéder à la liste des diplômes')
+    }
+    
+    const degrees = await Degree.all()
+    
+    return this.buildJSONResponse({
+      data: degrees
+    })
+  }
 
   public async updateDegree({ params, request, auth }: HttpContext) {
     const user = auth.user
