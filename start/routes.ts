@@ -9,6 +9,7 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
+
 const ClassesController = () => import('../controllers/classes_controller/controller.js')
 const ExamsController = () => import('../controllers/exams_controller/controller.js')
 const DegreesController = () => import('../controllers/degrees_controller/controller.js')
@@ -43,6 +44,7 @@ router
     router.delete(':idClass/students/:idStudent', [StudentsController, 'deleteStudentFromClass']).use(middleware.auth())
     router.delete(':idClass/exams/:idExam', [ExamsController, 'deleteExamFromClass']).use(middleware.auth())
     router.put(':idClass/teachers/:idTeacher', [TeachersController, 'putTeacherToClass']).use(middleware.auth())
+    router.delete(':idClass/teachers/:idTeacher', [TeachersController, 'removeTeacherFromClass']).use(middleware.auth())
   })
   .prefix('/api/classes')
 

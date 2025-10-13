@@ -7,12 +7,32 @@ import {
   createTeacherValidator,
   onlyIdTeacherWithExistsValidator,
   updateTeacherValidator,
-  classTeacherParamsValidator
+  classTeacherParamsValidator,
+  classTeacherAssociationValidator
 } from './validator.js'
 
 export default class TeachersController extends AbstractController {
   constructor() {
     super()
+  }
+
+  public async removeTeacherFromClass({ params, auth }: HttpContext) {
+    const user = auth.user
+    if (!user || user.accountType !== 'admin') {
+      throw new UnauthorizedException('Seuls les administrateurs peuvent retirer un professeur d\'une classe')
+    }
+      
+    // Valider les paramètres
+    const validatedParams = await classTeacherAssociationValidator.validate(params)
+    const { idClass, idTeacher } = validatedParams
+
+    const classInstance = await Class.findOrFail(idClass)
+    
+    await classInstance.related('teachers').detach([idTeacher])
+
+    return this.buildJSONResponse({
+      message: 'Professeur retiré de la classe avec succès'
+    })
   }
   
   public async putTeacherToClass({ params, auth }: HttpContext) { 

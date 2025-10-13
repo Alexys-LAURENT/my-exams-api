@@ -32,7 +32,7 @@ export default class ClassesController extends AbstractController {
     const classes = await Class.all()
     return this.buildJSONResponse({ data: classes })
   }
-  
+
   public async deleteIdClass({ params, auth }: HttpContext) {
     // Vérifier que l'utilisateur est bien connecté
     const user = auth.user
