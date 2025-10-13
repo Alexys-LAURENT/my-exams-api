@@ -99,6 +99,7 @@ router
       'getAnswersByQuestionsForExam',
     ])
     router.post('/:idExam/start', [ExamsController, 'startExam']).use(middleware.auth())
+    router.post('/:idExam/stop', [ExamsController, 'stopExam']).use(middleware.auth())
     router.post('/', [ExamsController, 'createExam'])
     router.post('/:idExam/questions', [QuestionsController, 'createQuestion'])
     router.post('/:idExam/questions/:idQuestion/answers', [AnswersController, 'createAnswers'])

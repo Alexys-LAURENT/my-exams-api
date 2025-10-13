@@ -2,11 +2,11 @@ import vine from '@vinejs/vine'
 
 export const classAndExamParamsValidator = vine.compile(
   vine.object({
-    idClass: vine.string().exists(async (db, value) => {
+    idClass: vine.number().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()
       return row ? true : false
     }),
-    idExam: vine.string().exists(async (db, value) => {
+    idExam: vine.number().exists(async (db, value) => {
       const row = await db.from('exams').where('id_exam', value).first()
       return row ? true : false
     }),
@@ -15,11 +15,11 @@ export const classAndExamParamsValidator = vine.compile(
 
 export const classExamParamsValidator = vine.compile(
   vine.object({
-    idClass: vine.string().exists(async (db, value) => {
+    idClass: vine.number().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()
       return row ? true : false
     }),
-    idExam: vine.string().exists(async (db, value) => {
+    idExam: vine.number().exists(async (db, value) => {
       const row = await db.from('exams').where('id_exam', value).first()
       return row ? true : false
     }),
@@ -55,7 +55,7 @@ export const createExamValidator = vine.compile(
 
 export const onlyIdTeacherWithExistsValidator = vine.compile(
   vine.object({
-    idTeacher: vine.string().exists(async (db, value) => {
+    idTeacher: vine.number().exists(async (db, value) => {
       const row = await db
         .from('users')
         .where('id_user', value)
@@ -91,7 +91,7 @@ export const checkStatusValidator = vine.compile(
 
 export const onlyIdExamWithExistsValidator = vine.compile(
   vine.object({
-    idExam: vine.string().exists(async (db, value) => {
+    idExam: vine.number().exists(async (db, value) => {
       const row = await db.from('exams').where('id_exam', value).first()
       return row ? true : false
     }),
@@ -100,7 +100,16 @@ export const onlyIdExamWithExistsValidator = vine.compile(
 
 export const startExamValidator = vine.compile(
   vine.object({
-    idExam: vine.string().exists(async (db, value) => {
+    idExam: vine.number().exists(async (db, value) => {
+      const row = await db.from('exams').where('id_exam', value).first()
+      return row ? true : false
+    }),
+  })
+)
+
+export const stopExamValidator = vine.compile(
+  vine.object({
+    idExam: vine.number().exists(async (db, value) => {
       const row = await db.from('exams').where('id_exam', value).first()
       return row ? true : false
     }),

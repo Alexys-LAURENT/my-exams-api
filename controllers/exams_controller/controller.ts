@@ -1,9 +1,13 @@
 import ClientAccessibleException from '#exceptions/client_accessible_exception'
 import UnauthorizedException from '#exceptions/un_authorized_exception'
+import Answer from '#models/answer'
 import Class from '#models/class'
 import Exam from '#models/exam'
 import ExamGrade from '#models/exam_grade'
+import Question from '#models/question'
+import UserResponse from '#models/user_response'
 import type { HttpContext } from '@adonisjs/core/http'
+import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
 import {
@@ -228,5 +232,159 @@ export default class ExamsController extends AbstractController {
     })
 
     return this.buildJSONResponse({ message: 'Exam started' })
+  }
+
+  public async stopExam({ params, auth }: HttpContext) {
+    const user = await auth.authenticate()
+
+    if (user.accountType !== 'student') {
+      throw new UnauthorizedException('Only students can stop an exam')
+    }
+
+    const valid = await startExamValidator.validate(params)
+
+    // Récupérer l'examen et vérifier l'ExamGrade en cours
+    const [exam, pendingExamGrade] = await Promise.all([
+      Exam.findOrFail(valid.idExam),
+      ExamGrade.query()
+        .where('id_exam', valid.idExam)
+        .andWhere('id_user', user.idUser)
+        .andWhere('status', 'en cours')
+        .first(),
+    ])
+
+    if (!pendingExamGrade) {
+      throw new ClientAccessibleException("You don't have any pending exam of this type")
+    }
+
+    // Récupérer toutes les données nécessaires en une seule fois
+    const [questionsOfExam, userResponses, allAnswers] = await Promise.all([
+      Question.query().where('id_exam', valid.idExam),
+      UserResponse.query().where('id_exam', valid.idExam).andWhere('id_user', user.idUser),
+      Answer.query().where('id_exam', valid.idExam),
+    ])
+
+    // Créer les réponses manquantes si nécessaire
+    const questionsWithoutResponse = questionsOfExam.filter((question) => {
+      return !userResponses.some((response) => response.idQuestion === question.idQuestion)
+    })
+
+    if (questionsWithoutResponse.length > 0) {
+      const newUserResponses = await UserResponse.createMany(
+        questionsWithoutResponse.map((question) => ({
+          idUser: user.idUser,
+          idExam: valid.idExam,
+          idQuestion: question.idQuestion,
+          custom: null,
+        }))
+      )
+      userResponses.push(...newUserResponses)
+    }
+
+    // Récupérer les réponses sélectionnées par l'utilisateur
+    const userResponsesAnswers = await db
+      .query()
+      .from('user_responses_answers')
+      .whereIn(
+        'id_user_response',
+        userResponses.map((response) => response.idUserResponse)
+      )
+
+    let totalScore = 0
+    let allQuestionsAreCorrectable = true
+    const evaluationsToCreate = []
+
+    // Traiter chaque question
+    for (const question of questionsOfExam) {
+      if (question.isQcm) {
+        // Filtrer les réponses pour cette question spécifique
+        const questionAnswers = allAnswers.filter(
+          (answer) => answer.idQuestion === question.idQuestion
+        )
+        const correctAnswers = questionAnswers.filter((answer) => answer.isCorrect)
+
+        // Trouver la réponse utilisateur pour cette question
+        const userResponse = userResponses.find(
+          (response) => response.idQuestion === question.idQuestion
+        )
+        if (!userResponse) continue
+
+        // Réponses sélectionnées par l'utilisateur pour cette question
+        const userSelectedAnswers = userResponsesAnswers.filter(
+          (ura) => ura.id_user_response === userResponse.idUserResponse
+        )
+
+        let questionScore = 0
+
+        if (question.isMultiple) {
+          // Question à choix multiples : toutes les bonnes réponses ET aucune mauvaise
+          const hasAllCorrectAnswers = correctAnswers.every((correctAnswer) =>
+            userSelectedAnswers.some((ura) => ura.id_answer === correctAnswer.idAnswer)
+          )
+
+          const hasOnlyCorrectAnswers = userSelectedAnswers.every((userAnswer) =>
+            correctAnswers.some((correctAnswer) => correctAnswer.idAnswer === userAnswer.id_answer)
+          )
+
+          if (hasAllCorrectAnswers && hasOnlyCorrectAnswers && userSelectedAnswers.length > 0) {
+            questionScore = Number.parseInt(question.maxPoints as unknown as string)
+          }
+        } else {
+          // Question à choix unique : exactement une réponse et elle doit être correcte
+          if (userSelectedAnswers.length === 1) {
+            const selectedAnswer = userSelectedAnswers[0]
+            const isCorrect = correctAnswers.some(
+              (correctAnswer) => correctAnswer.idAnswer === selectedAnswer.id_answer
+            )
+
+            if (isCorrect) {
+              questionScore = Number.parseInt(question.maxPoints as unknown as string)
+            }
+          }
+        }
+
+        // Préparer l'évaluation à créer
+        evaluationsToCreate.push({
+          note: questionScore,
+          id_student: user.idUser,
+          id_teacher: exam.idTeacher, // Utilisation de l'idTeacher de l'examen
+          id_user_response: userResponse.idUserResponse,
+          created_at: DateTime.now().toSQL(),
+          updated_at: DateTime.now().toSQL(),
+        })
+
+        totalScore += questionScore
+      } else {
+        // Question non QCM : correction manuelle requise
+        allQuestionsAreCorrectable = false
+      }
+    }
+
+    // Créer toutes les évaluations en une seule requête
+    if (evaluationsToCreate.length > 0) {
+      await db.table('evaluations').multiInsert(evaluationsToCreate)
+    }
+
+    // Mettre à jour l'ExamGrade selon le statut
+    const updateData: any = {
+      updatedAt: DateTime.now(),
+    }
+
+    if (allQuestionsAreCorrectable) {
+      updateData.status = 'corrigé'
+      updateData.note = totalScore
+    } else {
+      updateData.status = 'à corrigé'
+    }
+
+    await pendingExamGrade.merge(updateData).save()
+
+    return this.buildJSONResponse({
+      message: 'Exam stopped successfully',
+      data: {
+        status: allQuestionsAreCorrectable ? 'corrigé' : 'à corrigé',
+        ...(allQuestionsAreCorrectable && { score: totalScore }),
+      },
+    })
   }
 }
