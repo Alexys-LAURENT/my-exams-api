@@ -22,21 +22,6 @@ export default class StudentsController extends AbstractController {
     return this.buildJSONResponse({ data: student })
   }
 
-  public async updateStudent({ request, params }: HttpContext) {
-    const content = await updateStudentValidator.validate(request.body())
-    const valid = await onlyIdStudentWithExistsValidator.validate(params)
-    const student = await User.findOrFail(valid.idStudent)
-
-    if (content.lastName) student.lastName = content.lastName
-    if (content.name) student.name = content.name
-    if (content.email) student.email = content.email
-    if (content.avatarPath) student.avatarPath = content.avatarPath
-    if (content.password) student.password = content.password
-
-    await student.save()
-
-    return this.buildJSONResponse({ data: student })
-  }
   public async deleteStudent({ params }: HttpContext) {
     const student = await onlyIdStudentWithExistsValidator.validate(params)
     await User.query().where('id_user', student.idStudent).delete()

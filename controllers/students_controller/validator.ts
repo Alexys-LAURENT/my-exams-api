@@ -18,15 +18,6 @@ export const onlyIdClassWithExistsValidator = vine.compile(
     }),
   })
 )
-export const updateStudentValidator = vine.compile(
-  vine.object({
-    lastName: vine.string().trim().maxLength(100).optional(),
-    name: vine.string().trim().maxLength(100).optional(),
-    email: vine.string().email().trim().optional(),
-    password: vine.string().minLength(6).optional(),
-    avatarPath: vine.string().optional(),
-  })
-)
 export const onlyIdStudentWithExistsValidator = vine.compile(
   vine.object({
     idStudent: vine.string().exists(async (db, value) => {
