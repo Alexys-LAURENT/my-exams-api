@@ -27,8 +27,6 @@ export default class DegreesController extends AbstractController {
       throw new UnAuthorizedException('Seuls les administrateurs peuvent accéder à la liste des diplômes')
     }
     
-    await idDegreeExistsValidator.validate(request.qs())
-    
     const degrees = await Degree.all()
     
     return this.buildJSONResponse({
