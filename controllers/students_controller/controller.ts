@@ -2,7 +2,7 @@ import Class from '#models/class'
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import { onlyIdClassWithExistsValidator, classStudentParamsValidator, createStudentValidator } from './validator.js'
+import { onlyIdClassWithExistsValidator, classStudentParamsValidator, createStudentValidator, onlyIdStudentWithExistsValidator } from './validator.js'
 import type { HttpContext } from '@adonisjs/core/http'
 import UnAuthorizedException from '#exceptions/un_authorized_exception'
 
@@ -68,5 +68,11 @@ export default class StudentsController extends AbstractController {
       message: 'Étudiant désassocié de la classe avec succès' 
     }) 
   }
-
+  public async getOneStudent({ params }: HttpContext) {
+    const valid = await onlyIdStudentWithExistsValidator.validate(params)
+    const theStudent = await User.findOrFail(valid.idStudent)
+    return this.buildJSONResponse({
+      data: theStudent,
+    })
+  }
 }

@@ -64,6 +64,7 @@ router
 router
   .group(() => {
     router.post('/', [StudentsController, 'createStudent'])
+    router.get('/:idStudent', [StudentsController, 'getOneStudent'])
     router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
     router.get('/:idStudent/exams/:idExam/status', [ExamsController, 'getExamGradeForOneStudent'])
   })
