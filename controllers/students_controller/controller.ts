@@ -3,12 +3,12 @@ import Class from '#models/class'
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import { onlyIdStudentWithExistsValidator } from '../classes_controller/validator.js'
 import {
   classStudentParamsValidator,
   createStudentValidator,
   onlyIdClassWithExistsValidator,
   updateStudentValidator,
+  onlyIdStudentWithExistsValidator
 } from './validator.js'
 
 export default class StudentsController extends AbstractController {
@@ -101,6 +101,14 @@ export default class StudentsController extends AbstractController {
    public async getAll(){
     const students = await User.query().where('account_type', 'student')
     return this.buildJSONResponse({data: students})
+  }
+  
+  public async getOneStudent({ params }: HttpContext) {
+    const valid = await onlyIdStudentWithExistsValidator.validate(params)
+    const theStudent = await User.findOrFail(valid.idStudent)
+    return this.buildJSONResponse({
+      data: theStudent,
+    })
   }
   
 }

@@ -70,6 +70,7 @@ router
     router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
     router.get('/:idStudent/exams/:idExam/status', [ExamsController, 'getExamGradeForOneStudent'])
     router.get('/', [StudentsController, 'getAll'])
+    router.get('/:idStudent', [StudentsController, 'getOneStudent'])
   })
   .prefix('/api/students')
 
