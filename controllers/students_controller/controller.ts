@@ -50,5 +50,23 @@ export default class StudentsController extends AbstractController {
       message: 'Étudiant associé à la classe avec succès'
     })
   }
+  
+  public async deleteStudentFromClass({ params, auth }: HttpContext) { 
+    const user = auth.user
+    if (!user || user.accountType !== 'admin') { 
+      throw new UnAuthorizedException('Seuls les administrateurs peuvent désassocier un étudiant d\'une classe')
+    }
+    
+    const validatedParams = await classStudentParamsValidator.validate(params) 
+    const { idClass, idStudent } = validatedParams
+    
+    const classInstance = await Class.findOrFail(idClass)
+    
+    await classInstance.related('students').detach([idStudent])
+    
+    return this.buildJSONResponse({ 
+      message: 'Étudiant désassocié de la classe avec succès' 
+    }) 
+  }
 
 }
