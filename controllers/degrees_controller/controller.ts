@@ -28,7 +28,7 @@ export default class DegreesController extends AbstractController {
       throw new UnAuthorizedException('Seuls les administrateurs peuvent supprimer des diplômes')
     }
 
-    const validatedParams = await idDegreeExistsValidator.validate({ idDegree: params.idDegree })
+    const validatedParams = await idDegreeExistsValidator.validate(params)
     const { idDegree } = validatedParams
 
     const degree = await Degree.findOrFail(idDegree)
@@ -36,7 +36,6 @@ export default class DegreesController extends AbstractController {
     await degree.delete()
 
     return this.buildJSONResponse({
-      success: true,
       message: 'Diplôme supprimé avec succès'
     })
   }
