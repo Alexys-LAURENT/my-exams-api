@@ -7,12 +7,13 @@ export const classTeacherAssociationValidator = vine.compile(
       return row ? true : false
     }),
     idTeacher: vine.string().exists(async (db, value) => {
-      const row = await db.from('users')
+      const row = await db
+        .from('users')
         .where('id_user', value)
         .where('account_type', 'teacher')
         .first()
       return row ? true : false
-    })
+    }),
   })
 )
 
@@ -23,12 +24,13 @@ export const classTeacherParamsValidator = vine.compile(
       return row ? true : false
     }),
     idTeacher: vine.string().exists(async (db, value) => {
-      const row = await db.from('users')
+      const row = await db
+        .from('users')
         .where('id_user', value)
         .where('account_type', 'teacher')
         .first()
       return row ? true : false
-    })
+    }),
   })
 )
 
