@@ -8,3 +8,9 @@ export const onlyIdClassWithExistsValidator = vine.compile(
     }),
   })
 )
+
+export const createDegreeValidator = vine.compile(
+  vine.object({
+    name: vine.string().minLength(2).maxLength(100).trim(),
+  })
+)

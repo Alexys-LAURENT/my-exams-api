@@ -86,3 +86,9 @@ router
     router.post('/:idExam/questions/:idQuestion/answers', [AnswersController, 'createAnswers'])
   })
   .prefix('/api/exams')
+
+router
+  .group(() => {
+    router.post('/', [DegreesController, 'createDegree']).use(middleware.auth())
+  })
+  .prefix('/api/degrees')
