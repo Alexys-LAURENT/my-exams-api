@@ -89,6 +89,6 @@ router
 
 router
   .group(() => {
-    router.post('/', [DegreesController, 'createDegree']).use(middleware.auth())
+    router.delete('/:idDegree', [DegreesController, 'deleteDegree']).use(middleware.auth())
   })
   .prefix('/api/degrees')
