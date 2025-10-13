@@ -1,8 +1,6 @@
-import Answer from '#models/answer'
 import Exam from '#models/exam'
-import UserResponse from '#models/user_response'
-import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
+import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 
 export default class Question extends BaseModel {
@@ -38,13 +36,15 @@ export default class Question extends BaseModel {
   })
   declare exam: BelongsTo<typeof Exam>
 
-  @hasMany(() => Answer, {
-    foreignKey: 'idQuestion',
-  })
-  declare answers: HasMany<typeof Answer>
+  // You have to know that this relation exists but we can't define the hasMany here beacause the Question model has a composite primary key (idQuestion, idExam)
+  // @hasMany(() => Answer, {
+  //   foreignKey: 'idQuestion',
+  // })
+  // declare answers: HasMany<typeof Answer>
 
-  @hasMany(() => UserResponse, {
-    foreignKey: 'idQuestion',
-  })
-  declare userResponses: HasMany<typeof UserResponse>
+  // You have to know that this relation exists but we can't define the hasMany here beacause the Question model has a composite primary key (idQuestion, idExam)
+  // @hasMany(() => UserResponse, {
+  //   foreignKey: 'idQuestion',
+  // })
+  // declare userResponses: HasMany<typeof UserResponse>
 }
