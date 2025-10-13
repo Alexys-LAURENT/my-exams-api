@@ -2,7 +2,7 @@ import Class from '#models/class'
 import Degree from '#models/degree'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
-import { onlyIdClassWithExistsValidator, idDegreeExistsValidator, degreeValidator } from './validator.js'
+import { onlyIdClassWithExistsValidator, idDegreeExistsValidator, degreeValidator, createDegreeValidator } from './validator.js'
 import UnAuthorizedException from '#exceptions/un_authorized_exception'
 
 export default class DegreesController extends AbstractController {
@@ -43,6 +43,43 @@ export default class DegreesController extends AbstractController {
     return this.buildJSONResponse({
       message: 'Diplôme mis à jour avec succès',
       data: degree
+     })
+  }
+  
+  public async createDegree({ request, auth }: HttpContext) {
+
+    const user = auth.user
+    if (!user || user.accountType !== 'admin') {
+      throw new UnAuthorizedException('Seuls les administrateurs peuvent créer des diplômes')
+    }
+
+    const data = await createDegreeValidator.validate(request.body())
+
+    const degree = await Degree.create({
+      name: data.name
+    })
+
+    return this.buildJSONResponse({
+      message: 'Diplôme créé avec succès',
+      data: degree
+    })
+  }
+
+  public async deleteDegree({ params, auth }: HttpContext) {
+    const user = auth.user
+    if (!user || user.accountType !== 'admin') {
+      throw new UnAuthorizedException('Seuls les administrateurs peuvent supprimer des diplômes')
+    }
+
+    const validatedParams = await idDegreeExistsValidator.validate(params)
+    const { idDegree } = validatedParams
+
+    const degree = await Degree.findOrFail(idDegree)
+
+    await degree.delete()
+
+    return this.buildJSONResponse({
+      message: 'Diplôme supprimé avec succès'
     })
   }
 }

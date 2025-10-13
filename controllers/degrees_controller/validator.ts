@@ -9,9 +9,12 @@ export const onlyIdClassWithExistsValidator = vine.compile(
   })
 )
 
-/**
- * Validateur pour vérifier l'existence d'un ID de diplôme
- */
+export const createDegreeValidator = vine.compile(
+  vine.object({
+    name: vine.string().minLength(2).maxLength(100).trim(),
+  })
+)
+
 export const idDegreeExistsValidator = vine.compile(
   vine.object({
     idDegree: vine.string().exists(async (db, value) => {
@@ -21,9 +24,6 @@ export const idDegreeExistsValidator = vine.compile(
   })
 )
 
-/**
- * Validateur pour la création ou la mise à jour d'un diplôme
- */
 export const degreeValidator = vine.compile(
   vine.object({
     name: vine.string().minLength(2).maxLength(100).trim(),
