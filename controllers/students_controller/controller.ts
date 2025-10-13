@@ -97,4 +97,10 @@ export default class StudentsController extends AbstractController {
       message: 'Étudiant désassocié de la classe avec succès',
     })
   }
+  
+   public async getAll(){
+    const students = await User.query().where('account_type', 'student')
+    return this.buildJSONResponse({data: students})
+  }
+  
 }
