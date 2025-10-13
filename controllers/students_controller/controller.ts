@@ -7,8 +7,8 @@ import {
   classStudentParamsValidator,
   createStudentValidator,
   onlyIdClassWithExistsValidator,
+  onlyIdStudentWithExistsValidator,
   updateStudentValidator,
-  onlyIdStudentWithExistsValidator
 } from './validator.js'
 
 export default class StudentsController extends AbstractController {
@@ -97,12 +97,12 @@ export default class StudentsController extends AbstractController {
       message: 'Étudiant désassocié de la classe avec succès',
     })
   }
-  
-   public async getAll(){
+
+  public async getAll() {
     const students = await User.query().where('account_type', 'student')
-    return this.buildJSONResponse({data: students})
+    return this.buildJSONResponse({ data: students })
   }
-  
+
   public async getOneStudent({ params }: HttpContext) {
     const valid = await onlyIdStudentWithExistsValidator.validate(params)
     const theStudent = await User.findOrFail(valid.idStudent)
@@ -110,5 +110,4 @@ export default class StudentsController extends AbstractController {
       data: theStudent,
     })
   }
-  
 }
