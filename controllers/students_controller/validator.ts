@@ -23,7 +23,6 @@ export const updateStudentValidator = vine.compile(
     lastName: vine.string().trim().maxLength(100).optional(),
     name: vine.string().trim().maxLength(100).optional(),
     email: vine.string().email().trim().optional(),
-    password: vine.string().minLength(6).optional(),
     avatarPath: vine.string().optional(),
   })
 )

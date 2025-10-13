@@ -31,7 +31,6 @@ export default class StudentsController extends AbstractController {
     if (content.name) student.name = content.name
     if (content.email) student.email = content.email
     if (content.avatarPath) student.avatarPath = content.avatarPath
-    if (content.password) student.password = content.password
 
     await student.save()
 
