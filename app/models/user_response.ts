@@ -1,9 +1,8 @@
-import Answer from '#models/answer'
-import Question from '#models/question'
 import User from '#models/user'
-import { BaseModel, belongsTo, column, manyToMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, ManyToMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column, hasMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
+import Evaluation from './evaluation.js'
 
 export default class UserResponse extends BaseModel {
   @column({ isPrimary: true, columnName: 'id_user_response' })
@@ -21,9 +20,6 @@ export default class UserResponse extends BaseModel {
   @column({ columnName: 'id_exam' })
   declare idExam: number
 
-  @column({ columnName: 'id_answer' })
-  declare idAnswer: number | null
-
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 
@@ -35,17 +31,24 @@ export default class UserResponse extends BaseModel {
   })
   declare user: BelongsTo<typeof User>
 
-  @belongsTo(() => Question, {
-    foreignKey: 'idQuestion',
-  })
-  declare question: BelongsTo<typeof Question>
+  // You have to know that this relation exists but we can't define the belongsTo here beacause the Question model has a composite primary key (idQuestion, idExam)
+  // @belongsTo(() => Question, {
+  //   foreignKey: 'idQuestion',
+  // })
+  // declare question: BelongsTo<typeof Question>
 
-  @manyToMany(() => Answer, {
-    pivotTable: 'user_responses_answers',
-    localKey: 'idUserResponse',
-    pivotForeignKey: 'id_user_response',
-    relatedKey: 'idAnswer',
-    pivotRelatedForeignKey: 'id_answer',
+  // You have to know that this relation exists but we can't define the manyToMany here beacause the Answer model has a composite primary key (idAnswer, idQuestion, idExam)
+  // @manyToMany(() => Answer, {
+  //   pivotTable: 'user_responses_answers',
+  //   localKey: 'idUserResponse',
+  //   pivotForeignKey: 'id_user_response',
+  //   relatedKey: 'idAnswer',
+  //   pivotRelatedForeignKey: 'id_answer',
+  // })
+  // declare answer: ManyToMany<typeof Answer>
+
+  @hasMany(() => Evaluation, {
+    foreignKey: 'idUserResponse',
   })
-  declare answer: ManyToMany<typeof Answer>
+  declare evaluations: HasMany<typeof Evaluation>
 }
