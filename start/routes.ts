@@ -58,6 +58,7 @@ router
     router.get('/:idTeacher/exams', [ExamsController, 'getAllExamsForOneTeacher'])
     router.delete('/:idTeacher', [TeachersController, 'deleteTeacher'])
     router.put('/:idTeacher', [TeachersController, 'updateTeacher'])
+    router.get(':idTeacher/classes', [ClassesController, 'getAllClassesForOneTeacher'])
   })
   .prefix('/api/teachers')
 
