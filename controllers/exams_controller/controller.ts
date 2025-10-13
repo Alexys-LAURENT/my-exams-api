@@ -10,6 +10,7 @@ import {
   onlyIdExamWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
   startExamValidator,
+  checkStatusValidator
 } from './validator.js'
 
 export default class ExamsController extends AbstractController {
@@ -45,6 +46,15 @@ export default class ExamsController extends AbstractController {
     return this.buildJSONResponse({ data: exams })
   }
 
+  public async getExamGradeForOneStudent({ params }: HttpContext) {
+    const valid = await checkStatusValidator.validate(params)
+    const examGrade = await ExamGrade.query()
+      .where('id_user', valid.idStudent)
+      .andWhere('id_exam', valid.idExam)
+      .firstOrFail()
+    return this.buildJSONResponse({ data: { status: !!examGrade } })
+  }
+  
   public async startExam({ params, auth }: HttpContext) {
     const user = await auth.authenticate()
 

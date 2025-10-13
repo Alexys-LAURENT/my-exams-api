@@ -46,6 +46,7 @@ router
   .group(() => {
     router.post('/', [StudentsController, 'createStudent'])
     router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
+    router.get('/:idStudent/exams/:idExam/status', [ExamsController, 'getExamGradeForOneStudent'])
   })
   .prefix('/api/students')
 
