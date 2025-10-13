@@ -17,6 +17,7 @@ export const onlyIdClassWithExistsValidator = vine.compile(
     }),
   })
 )
+
 export const updateStudentValidator = vine.compile(
   vine.object({
     lastName: vine.string().trim().maxLength(100).optional(),
