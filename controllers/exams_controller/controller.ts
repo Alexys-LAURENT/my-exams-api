@@ -12,7 +12,9 @@ import {
   onlyIdTeacherWithExistsValidator,
   startExamValidator,
   checkStatusValidator,
-  classExamParamsValidator
+  classExamParamsValidator,
+  classAndExamParamsValidator, 
+  examDateValidator
 } from './validator.js'
 
 export default class ExamsController extends AbstractController {
@@ -20,6 +22,41 @@ export default class ExamsController extends AbstractController {
     super()
   }
 
+  async putExamsForClass({ params, request, auth }: HttpContext) {
+      const user = auth.user
+      if (user?.accountType !== 'teacher' && user?.accountType !== 'admin') {
+        throw new UnauthorizedException('Seuls les professeurs peuvent ajouter des examens aux classes')
+      }
+
+      const validatedParams = await classAndExamParamsValidator.validate(params)
+
+      const { idClass, idExam } = validatedParams
+
+      const classInstance = await Class.findOrFail(idClass)
+
+      const exam = await Exam.findOrFail(idExam)
+      if (exam.idTeacher !== user?.idUser) {
+        throw new UnauthorizedException('Vous ne pouvez ajouter que vos propres examens aux classes')
+      }
+
+      const bodyData = await examDateValidator.validate(request.body())
+
+      const startDate = bodyData.start_date.toISOString()
+      const endDate = bodyData.end_date.toISOString()
+
+      // Ajouter l'examen à la classe avec les dates dans la table pivot
+      await classInstance.related('exams').attach({
+        [idExam]: {
+          start_date: startDate,
+          end_date: endDate,
+        },
+      })
+
+      return this.buildJSONResponse({
+        message: 'Examen ajouté à la classe avec succès',
+      })
+  }
+  
   public async createExam({ request }: HttpContext) {
     const content = await createExamValidator.validate(request.body())
     const exam = await Exam.create({
@@ -124,3 +161,4 @@ export default class ExamsController extends AbstractController {
     return this.buildJSONResponse({ message: 'Exam started' })
   }
 }
+ 

@@ -45,6 +45,7 @@ router
     router.delete(':idClass/exams/:idExam', [ExamsController, 'deleteExamFromClass']).use(middleware.auth())
     router.put(':idClass/teachers/:idTeacher', [TeachersController, 'putTeacherToClass']).use(middleware.auth())
     router.delete(':idClass/teachers/:idTeacher', [TeachersController, 'removeTeacherFromClass']).use(middleware.auth())
+    router.put(':idClass/exams/:idExam', [ExamsController, 'putExamsForClass']).use(middleware.auth())
   })
   .prefix('/api/classes')
 
