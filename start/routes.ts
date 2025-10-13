@@ -58,15 +58,19 @@ router
     router
       .put(':idClass/exams/:idExam', [ExamsController, 'putExamsForClass'])
       .use(middleware.auth())
+    router.get(':idClass/exams', [ExamsController, 'getExamsOfClass']).use(middleware.auth())
   })
   .prefix('/api/classes')
 
 router
   .group(() => {
     router.post('/', [StudentsController, 'createStudent'])
-    router.get('/:idStudent', [StudentsController, 'getOneStudent'])
+    router.delete('/:idStudent', [StudentsController, 'deleteStudent'])
+    router.put('/:idStudent', [StudentsController, 'updateStudent'])
     router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
     router.get('/:idStudent/exams/:idExam/status', [ExamsController, 'getExamGradeForOneStudent'])
+    router.get('/', [StudentsController, 'getAll'])
+    router.get('/:idStudent', [StudentsController, 'getOneStudent'])
   })
   .prefix('/api/students')
 

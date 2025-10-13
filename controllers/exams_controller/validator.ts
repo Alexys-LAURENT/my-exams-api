@@ -9,7 +9,7 @@ export const classAndExamParamsValidator = vine.compile(
     idExam: vine.string().exists(async (db, value) => {
       const row = await db.from('exams').where('id_exam', value).first()
       return row ? true : false
-    })
+    }),
   })
 )
 
@@ -22,14 +22,14 @@ export const classExamParamsValidator = vine.compile(
     idExam: vine.string().exists(async (db, value) => {
       const row = await db.from('exams').where('id_exam', value).first()
       return row ? true : false
-    })
+    }),
   })
 )
 
 export const examDateValidator = vine.compile(
   vine.object({
     start_date: vine.date({ formats: ['yyyy-MM-ddTHH:mm:ssZ'] }),
-    end_date: vine.date({ formats: ['yyyy-MM-ddTHH:mm:ssZ'] })
+    end_date: vine.date({ formats: ['yyyy-MM-ddTHH:mm:ssZ'] }),
   })
 )
 
@@ -86,7 +86,7 @@ export const checkStatusValidator = vine.compile(
         const row = await db.from('exams').where('id_exam', value).first()
         return !!row
       }),
- })
+  })
 )
 
 export const onlyIdExamWithExistsValidator = vine.compile(
@@ -102,6 +102,28 @@ export const startExamValidator = vine.compile(
   vine.object({
     idExam: vine.string().exists(async (db, value) => {
       const row = await db.from('exams').where('id_exam', value).first()
+      return row ? true : false
+    }),
+  })
+)
+
+export const getExamsOfClassQueryValidator = vine.compile(
+  vine.object({
+    status: vine.enum(['completed', 'pending', 'comming']).optional(),
+    limit: vine
+      .number()
+      .min(1)
+      .optional()
+      .transform((value) => {
+        return value === undefined ? null : value
+      }),
+  })
+)
+
+export const getExamsOfClassParamsValidator = vine.compile(
+  vine.object({
+    idClass: vine.string().exists(async (db, value) => {
+      const row = await db.from('classes').where('id_class', value).first()
       return row ? true : false
     }),
   })
