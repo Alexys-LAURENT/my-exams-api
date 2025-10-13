@@ -20,7 +20,6 @@ export default class ExamsController extends AbstractController {
 
       const { idClass, idExam } = validatedParams
 
-      // Récupérer la classe sans vérifier l'association existante
       const classInstance = await Class.findOrFail(idClass)
 
       const exam = await Exam.findOrFail(idExam)
@@ -30,12 +29,10 @@ export default class ExamsController extends AbstractController {
 
       const bodyData = await examDateValidator.validate(request.body())
 
-      // Les dates sont maintenant des objets Date JavaScript
-      // Nous devons les convertir en format SQL pour l'ORM
       const startDate = bodyData.start_date.toISOString()
       const endDate = bodyData.end_date.toISOString()
 
-      // Ajouter l'examen à la classe avec les dates pivot
+      // Ajouter l'examen à la classe avec les dates dans la table pivot
       await classInstance.related('exams').attach({
         [idExam]: {
           start_date: startDate,
