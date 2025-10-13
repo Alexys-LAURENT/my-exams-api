@@ -12,20 +12,19 @@ import {
   classExamParamsValidator,
   createExamValidator,
   examDateValidator,
+  getExamsOfClassParamsValidator,
+  getExamsOfClassQueryValidator,
   onlyIdExamWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
   startExamValidator,
-  getExamsOfClassParamsValidator, 
-  getExamsOfClassQueryValidator
 } from './validator.js'
 
 export default class ExamsController extends AbstractController {
   constructor() {
     super()
   }
-  
-  public async getExamsOfClass({ params, request, auth }: HttpContext) {
 
+  public async getExamsOfClass({ params, request, auth }: HttpContext) {
     const validParams = await getExamsOfClassParamsValidator.validate(params)
 
     const theClass = await Class.findOrFail(validParams.idClass)
@@ -33,7 +32,7 @@ export default class ExamsController extends AbstractController {
     const validQuery = await getExamsOfClassQueryValidator.validate(request.qs())
 
     const { status, limit } = validQuery
-    
+
     let examsQuery = theClass.related('exams').query().pivotColumns(['start_date', 'end_date'])
 
     const user = await auth.authenticate()
@@ -44,53 +43,47 @@ export default class ExamsController extends AbstractController {
 
     if (status && userId) {
       if (status === 'completed') {
-
-        examsQuery.whereExists(query => {
+        examsQuery.whereExists((query) => {
           query
             .from('exam_grades')
             .whereRaw('exam_grades.id_exam = exams.id_exam')
             .where('exam_grades.id_user', userId)
         })
       } else if (status === 'pending') {
-
         examsQuery
           .wherePivot('start_date', '<=', today)
           .wherePivot('end_date', '>=', today)
-          .whereNotExists(query => {
+          .whereNotExists((query) => {
             query
               .from('exam_grades')
               .whereRaw('exam_grades.id_exam = exams.id_exam')
               .where('exam_grades.id_user', userId)
           })
       } else if (status === 'comming') {
-
-        examsQuery
-          .wherePivot('start_date', '>', today)
-          .whereNotExists(query => {
-            query
-              .from('exam_grades')
-              .whereRaw('exam_grades.id_exam = exams.id_exam')
-              .where('exam_grades.id_user', userId)
-          })
+        examsQuery.wherePivot('start_date', '>', today).whereNotExists((query) => {
+          query
+            .from('exam_grades')
+            .whereRaw('exam_grades.id_exam = exams.id_exam')
+            .where('exam_grades.id_user', userId)
+        })
       }
     }
 
-   
     if (limit !== null) {
       examsQuery.limit(limit)
     }
-    
+
     const exams = await examsQuery
-    
+
     const serializedExams = exams.map((exam) => {
       return {
         ...exam.toJSON(),
 
         start_date: exam.$extras.pivot_start_date,
-        end_date: exam.$extras.pivot_end_date
+        end_date: exam.$extras.pivot_end_date,
       }
     })
-    
+
     return this.buildJSONResponse({ data: serializedExams })
   }
 

@@ -47,11 +47,12 @@ export const classStudentParamsValidator = vine.compile(
       return row ? true : false
     }),
     idStudent: vine.string().exists(async (db, value) => {
-      const row = await db.from('users')
+      const row = await db
+        .from('users')
         .where('id_user', value)
         .where('account_type', 'student')
         .first()
       return row ? true : false
-    })
+    }),
   })
 )
