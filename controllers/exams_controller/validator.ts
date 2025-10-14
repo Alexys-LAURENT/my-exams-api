@@ -1,19 +1,6 @@
 import vine from '@vinejs/vine'
 
-export const classAndExamParamsValidator = vine.compile(
-  vine.object({
-    idClass: vine.number().exists(async (db, value) => {
-      const row = await db.from('classes').where('id_class', value).first()
-      return row ? true : false
-    }),
-    idExam: vine.number().exists(async (db, value) => {
-      const row = await db.from('exams').where('id_exam', value).first()
-      return row ? true : false
-    }),
-  })
-)
-
-export const classExamParamsValidator = vine.compile(
+export const idClassAndIdExamWithExistsValidator = vine.compile(
   vine.object({
     idClass: vine.number().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()
@@ -66,7 +53,7 @@ export const onlyIdTeacherWithExistsValidator = vine.compile(
   })
 )
 
-export const checkStatusValidator = vine.compile(
+export const idStudentAndIdExamWithExistsValidator = vine.compile(
   vine.object({
     idStudent: vine
       .number()
@@ -98,24 +85,6 @@ export const onlyIdExamWithExistsValidator = vine.compile(
   })
 )
 
-export const startExamValidator = vine.compile(
-  vine.object({
-    idExam: vine.number().exists(async (db, value) => {
-      const row = await db.from('exams').where('id_exam', value).first()
-      return row ? true : false
-    }),
-  })
-)
-
-export const stopExamValidator = vine.compile(
-  vine.object({
-    idExam: vine.number().exists(async (db, value) => {
-      const row = await db.from('exams').where('id_exam', value).first()
-      return row ? true : false
-    }),
-  })
-)
-
 export const getExamsOfClassQueryValidator = vine.compile(
   vine.object({
     status: vine.enum(['completed', 'pending', 'comming']).optional(),
@@ -129,7 +98,7 @@ export const getExamsOfClassQueryValidator = vine.compile(
   })
 )
 
-export const getExamsOfClassParamsValidator = vine.compile(
+export const onlyIdClassWithExistsValidator = vine.compile(
   vine.object({
     idClass: vine.string().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()

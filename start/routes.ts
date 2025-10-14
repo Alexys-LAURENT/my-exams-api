@@ -71,6 +71,7 @@ router
     router.get('/:idStudent/exams/:idExam/status', [ExamsController, 'getExamGradeForOneStudent'])
     router.get('/', [StudentsController, 'getAll'])
     router.get('/:idStudent', [StudentsController, 'getOneStudent'])
+    router.get('/:idStudent/exams/:idExam/recap', [ExamsController, 'recap']).use(middleware.auth())
   })
   .prefix('/api/students')
 

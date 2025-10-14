@@ -2,6 +2,7 @@ import ClientAccessibleException from '#exceptions/client_accessible_exception'
 import UnauthorizedException from '#exceptions/un_authorized_exception'
 import Answer from '#models/answer'
 import Class from '#models/class'
+import Evaluation from '#models/evaluation'
 import Exam from '#models/exam'
 import ExamGrade from '#models/exam_grade'
 import Question from '#models/question'
@@ -11,16 +12,14 @@ import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
 import {
-  checkStatusValidator,
-  classAndExamParamsValidator,
-  classExamParamsValidator,
   createExamValidator,
   examDateValidator,
-  getExamsOfClassParamsValidator,
   getExamsOfClassQueryValidator,
+  idClassAndIdExamWithExistsValidator,
+  idStudentAndIdExamWithExistsValidator,
+  onlyIdClassWithExistsValidator,
   onlyIdExamWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
-  startExamValidator,
 } from './validator.js'
 
 export default class ExamsController extends AbstractController {
@@ -29,7 +28,7 @@ export default class ExamsController extends AbstractController {
   }
 
   public async getExamsOfClass({ params, request, auth }: HttpContext) {
-    const validParams = await getExamsOfClassParamsValidator.validate(params)
+    const validParams = await onlyIdClassWithExistsValidator.validate(params)
 
     const theClass = await Class.findOrFail(validParams.idClass)
 
@@ -99,7 +98,7 @@ export default class ExamsController extends AbstractController {
       )
     }
 
-    const validatedParams = await classAndExamParamsValidator.validate(params)
+    const validatedParams = await idClassAndIdExamWithExistsValidator.validate(params)
 
     const { idClass, idExam } = validatedParams
 
@@ -157,7 +156,7 @@ export default class ExamsController extends AbstractController {
   }
 
   public async getExamGradeForOneStudent({ params }: HttpContext) {
-    const valid = await checkStatusValidator.validate(params)
+    const valid = await idStudentAndIdExamWithExistsValidator.validate(params)
     const examGrade = await ExamGrade.query()
       .where('id_user', valid.idStudent)
       .andWhere('id_exam', valid.idExam)
@@ -172,7 +171,7 @@ export default class ExamsController extends AbstractController {
         "Seuls les professeurs et administrateurs peuvent désassocier un examen d'une classe"
       )
     }
-    const validatedParams = await classExamParamsValidator.validate(params)
+    const validatedParams = await idClassAndIdExamWithExistsValidator.validate(params)
     const { idClass, idExam } = validatedParams
     const classInstance = await Class.findOrFail(idClass)
 
@@ -195,7 +194,7 @@ export default class ExamsController extends AbstractController {
       throw new UnauthorizedException('Only students can start an exam')
     }
 
-    const valid = await startExamValidator.validate(params)
+    const valid = await onlyIdExamWithExistsValidator.validate(params)
 
     // On récupère la classe actuelle de l'étudiant
     const currentUserClass = await user
@@ -241,7 +240,7 @@ export default class ExamsController extends AbstractController {
       throw new UnauthorizedException('Only students can stop an exam')
     }
 
-    const valid = await startExamValidator.validate(params)
+    const valid = await onlyIdExamWithExistsValidator.validate(params)
 
     // Récupérer l'examen et vérifier l'ExamGrade en cours
     const [exam, pendingExamGrade] = await Promise.all([
@@ -386,5 +385,85 @@ export default class ExamsController extends AbstractController {
         ...(allQuestionsAreCorrectable && { score: totalScore }),
       },
     })
+  }
+
+  public async recap({ params, auth }: HttpContext) {
+    const valid = await idStudentAndIdExamWithExistsValidator.validate(params)
+    const loggedUser = await auth.authenticate()
+
+    if (loggedUser.accountType === 'student' && loggedUser.idUser !== valid.idStudent) {
+      throw new UnauthorizedException('Students can only access their own exam recaps')
+    }
+
+    // The exam
+    const exam = await Exam.findOrFail(valid.idExam)
+
+    if (loggedUser.accountType === 'teacher' && exam.idTeacher !== loggedUser.idUser) {
+      throw new UnauthorizedException('Teachers can only access recaps of their own exams')
+    }
+
+    const examGrade = await ExamGrade.query()
+      .where('id_user', valid.idStudent)
+      .andWhere('id_exam', valid.idExam)
+      .andWhereNot('status', 'en cours')
+      .first()
+
+    if (!examGrade) {
+      throw new ClientAccessibleException("You don't have any completed exam of this type")
+    }
+
+    // The questions of the exam
+    const questions = await Question.query().where('id_exam', valid.idExam)
+    // The answers of exma's questions that are `is_qcm`
+    const answers = await Answer.query().where('id_exam', valid.idExam)
+    // The user responses of the student for this exam
+    const userResponses = await UserResponse.query()
+      .where('id_user', valid.idStudent)
+      .andWhere('id_exam', valid.idExam)
+    // The user responses answers for questions that are `is_qcm`
+    const userResponsesAnswers = (await db
+      .query()
+      .from('user_responses_answers')
+      .whereIn(
+        'id_user_response',
+        userResponses.map((response) => response.idUserResponse)
+      )) as { id_user_response: number; id_answer: number; id_question: number; id_exam: number }[]
+    // The evaluations for the user responses
+    const evaluations = await Evaluation.query()
+      .whereIn(
+        'id_user_response',
+        userResponses.map((ur) => ur.idUserResponse)
+      )
+      .andWhere('id_student', valid.idStudent)
+
+    const recap = {
+      ...exam.toJSON(),
+      quetions: questions.map((question) => {
+        const questionAnswers = answers.filter(
+          (answer) => answer.idQuestion === question.idQuestion
+        )
+        const correctAnswers = questionAnswers.filter((answer) => answer.isCorrect)
+        const userResponse = userResponses.find((ur) => ur.idQuestion === question.idQuestion)
+        const userSelectedAnswers = userResponsesAnswers.filter(
+          (ura) => ura.id_user_response === userResponse?.idUserResponse
+        )
+        const evaluation = evaluations.find(
+          (ev) => ev.idUserResponse === userResponse?.idUserResponse
+        )
+        return {
+          ...question.toJSON(),
+          answers: questionAnswers,
+          correctAnswers,
+          userResponse: {
+            ...userResponse?.toJSON(),
+            selectedAnswers: userSelectedAnswers,
+          },
+          evaluation: evaluation ? evaluation.toJSON() : null,
+        }
+      }),
+      examGrade: examGrade.toJSON(),
+    }
+
+    return this.buildJSONResponse({ data: recap })
   }
 }
