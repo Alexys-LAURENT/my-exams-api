@@ -33,6 +33,10 @@ export default class UsersResponsesController extends AbstractController {
     if (checkedAnswers.answers != null && checkedAnswers.custom != null) {
       throw new Error('You can only send a custom answer or answers from the list, not both')
     }
+    const question = await Question.findOrFail(content.idQuestion)
+    if (!checkedAnswers.custom && checkedAnswers.answers.length > 1 && !question.isQcm) {
+      throw new Error('This question is not a QCM, you can only send a custom answer')
+    }
     const usersResponse = await UserResponse.create({
       custom: checkedAnswers.custom ? checkedAnswers.custom : null,
       idUser: user.idUser,
@@ -40,10 +44,6 @@ export default class UsersResponsesController extends AbstractController {
       idExam: content.idExam,
     })
     if (checkedAnswers.answers != null) {
-      const question = await Question.findOrFail(content.idQuestion)
-      if (checkedAnswers.answers.length > 1 && !question.isQcm) {
-        throw new Error('This question is not a QCM, you can only send a custom answer')
-      }
       const rows = checkedAnswers.answers.map((idAnswer) => ({
         id_answer: idAnswer,
         id_user_response: usersResponse.idUserResponse,
