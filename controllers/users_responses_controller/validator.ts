@@ -1,25 +1,15 @@
 import vine from '@vinejs/vine'
 
-export const onlyIdExamWithExistsValidator = vine.compile(
+export const createUsersResponseValidator = vine.compile(
   vine.object({
     idExam: vine.number().exists(async (db, value) => {
       const row = await db.from('exams').where('id_exam', value).first()
       return row ? true : false
     }),
-  })
-)
-
-export const onlyIdQuestionWithExistsValidator = vine.compile(
-  vine.object({
     idQuestion: vine.number().exists(async (db, value) => {
       const row = await db.from('questions').where('id_question', value).first()
       return row ? true : false
     }),
-  })
-)
-
-export const onlyIdStudentWithExistsValidator = vine.compile(
-  vine.object({
     idUser: vine.number().exists(async (db, value) => {
       const row = await db
         .from('users')
@@ -31,11 +21,42 @@ export const onlyIdStudentWithExistsValidator = vine.compile(
   })
 )
 
-export const createUsersResponseValidator = vine.compile(
+export const checkCustomOrNotValidator = vine.compile(
   vine.object({
     custom: vine.string().optional(),
-    idUser: vine.number().positive(),
-    idQuestion: vine.number().positive(),
-    idExam: vine.number().positive(),
+    answers: vine.union([
+      vine.union.if(
+        (value) => vine.helpers.isArray<File>(value),
+        vine.array(
+          vine
+            .string()
+            .exists(async (db, value, field) => {
+              const row = await db
+                .from('answers')
+                .where('id_answer', value)
+                .where('id_question', field.meta.idQuestion)
+                .where('id_exam', field.meta.idExam)
+                .first()
+              return row ? true : false
+            })
+            .optional()
+        )
+      ),
+      vine.union.else(
+        vine
+          .string()
+          .exists(async (db, value, field) => {
+            const row = await db
+              .from('answers')
+              .where('id_answer', value)
+              .where('id_question', field.meta.idQuestion)
+              .where('id_exam', field.meta.idExam)
+              .first()
+            return row ? true : false
+          })
+          .optional()
+          .transform((value) => (value ? [value] : []))
+      ),
+    ]),
   })
 )
