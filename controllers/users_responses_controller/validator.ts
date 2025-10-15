@@ -18,10 +18,10 @@ export const checkCustomOrNotValidator = vine.compile(
     custom: vine.string().optional(),
     answers: vine.union([
       vine.union.if(
-        (value) => vine.helpers.isArray<File>(value),
+        (value) => vine.helpers.isArray<number>(value),
         vine.array(
           vine
-            .string()
+            .number()
             .exists(async (db, value, field) => {
               const row = await db
                 .from('answers')
@@ -36,7 +36,7 @@ export const checkCustomOrNotValidator = vine.compile(
       ),
       vine.union.else(
         vine
-          .string()
+          .number()
           .exists(async (db, value, field) => {
             const row = await db
               .from('answers')
@@ -47,7 +47,7 @@ export const checkCustomOrNotValidator = vine.compile(
             return row ? true : false
           })
           .optional()
-          .transform((value) => (value ? [value] : []))
+          .transform((value) => (value ? [value] : ([] as number[])))
       ),
     ]),
   })
