@@ -18,6 +18,8 @@ const AuthController = () => import('../controllers/auth_controller/controller.j
 const AnswersController = () => import('../controllers/answers_controller/controller.js')
 const QuestionsController = () => import('../controllers/questions_controller/controller.js')
 const TeachersController = () => import('../controllers/teachers_controller/controller.js')
+const UsersResponsesController = () =>
+  import('../controllers/users_responses_controller/controller.js')
 
 /*
  █████  ██    ██ ████████ ██   ██ 
@@ -115,3 +117,10 @@ router
     router.put('/:idDegree', [DegreesController, 'updateDegree']).use(middleware.auth())
   })
   .prefix('/api/degrees')
+
+
+router
+  .group(() => {
+    router.post('/', [UsersResponsesController, 'createUsersResponse'])
+  })
+  .prefix('/api/users_responses')
