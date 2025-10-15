@@ -31,6 +31,15 @@ export const checkCustomOrNotValidator = vine.compile(
           vine
             .string()
             .exists(async (db, value, field) => {
+              const q = await db
+                .from('questions')
+                .where('id_question', field.meta.idQuestion)
+                .where('id_exam', field.meta.idExam)
+                .where('is_qcm', true)
+                .first()
+              if (!q) {
+                return false
+              }
               const row = await db
                 .from('answers')
                 .where('id_answer', value)
@@ -46,6 +55,15 @@ export const checkCustomOrNotValidator = vine.compile(
         vine
           .string()
           .exists(async (db, value, field) => {
+            const q = await db
+              .from('questions')
+              .where('id_question', field.meta.idQuestion)
+              .where('id_exam', field.meta.idExam)
+              .where('is_qcm', true)
+              .first()
+            if (!q) {
+              return false
+            }
             const row = await db
               .from('answers')
               .where('id_answer', value)
