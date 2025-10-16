@@ -153,15 +153,6 @@ export default class ExamsController extends AbstractController {
     return this.buildJSONResponse({ data: exams })
   }
 
-  public async getExamGradeForOneStudent({ params }: HttpContext) {
-    const valid = await idStudentAndIdExamWithExistsValidator.validate(params)
-    const examGrade = await ExamGrade.query()
-      .where('id_user', valid.idStudent)
-      .andWhere('id_exam', valid.idExam)
-      .firstOrFail()
-    return this.buildJSONResponse({ data: { status: !!examGrade } })
-  }
-
   public async deleteExamFromClass({ params, auth }: HttpContext) {
     const user = auth.user
     if (!user || (user.accountType !== 'teacher' && user.accountType !== 'admin')) {
