@@ -2,7 +2,7 @@ import vine from '@vinejs/vine'
 
 export const onlyIdClassWithExistsValidator = vine.compile(
   vine.object({
-    idClass: vine.string().exists(async (db, value) => {
+    idClass: vine.number().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()
       return row ? true : false
     }),
@@ -11,7 +11,7 @@ export const onlyIdClassWithExistsValidator = vine.compile(
 
 export const onlyIdTeacherWithExistsValidator = vine.compile(
   vine.object({
-    idTeacher: vine.string().exists(async (db, value) => {
+    idTeacher: vine.number().exists(async (db, value) => {
       const row = await db
         .from('users')
         .where('id_user', value)
@@ -24,7 +24,7 @@ export const onlyIdTeacherWithExistsValidator = vine.compile(
 
 export const DeleteClassValidator = vine.compile(
   vine.object({
-    idClass: vine.string().exists(async (db, value) => {
+    idClass: vine.number().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()
       return !!row
     }),
@@ -33,7 +33,7 @@ export const DeleteClassValidator = vine.compile(
 
 export const onlyIdStudentWithExistsValidator = vine.compile(
   vine.object({
-    idStudent: vine.string().exists(async (db, value) => {
+    idStudent: vine.number().exists(async (db, value) => {
       const row = await db
         .from('users')
         .where('id_user', value)

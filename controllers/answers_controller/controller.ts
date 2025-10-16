@@ -4,7 +4,6 @@ import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
 import {
   createAnswerValidator,
-  examQuestionParamsValidator,
   onlyIdExamWithExistsValidator,
   onlyIdQuestionWithExistsValidator,
 } from './validator.js'
@@ -16,9 +15,12 @@ export default class AnswersController extends AbstractController {
 
   public async createAnswers({ params, request }: HttpContext) {
     const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: params.idExam })
-    const validQuestion = await onlyIdQuestionWithExistsValidator.validate({
-      idQuestion: params.idQuestion,
-    })
+    const validQuestion = await onlyIdQuestionWithExistsValidator.validate(
+      {
+        idQuestion: params.idQuestion,
+      },
+      { meta: { idExam: validExam.idExam } }
+    )
     const content = await createAnswerValidator.validate(request.body())
     const answer = await Answer.create({
       idAnswer: content.idAnswer,
@@ -32,10 +34,16 @@ export default class AnswersController extends AbstractController {
   }
 
   public async getAnswersByQuestionsForExam({ params }: HttpContext) {
-    const { idExam, idQuestion } = await examQuestionParamsValidator.validate(params)
+    const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: params.idExam })
+    const validQuestion = await onlyIdQuestionWithExistsValidator.validate(
+      {
+        idQuestion: params.idQuestion,
+      },
+      { meta: { idExam: validExam.idExam } }
+    )
     const answers = await Answer.query()
-      .where('id_question', idQuestion)
-      .andWhere('id_exam', idExam)
+      .where('id_question', validQuestion.idQuestion)
+      .andWhere('id_exam', validExam.idExam)
       .select(['id_answer', 'answer', 'created_at', 'updated_at'])
     return this.buildJSONResponse({ data: answers })
   }

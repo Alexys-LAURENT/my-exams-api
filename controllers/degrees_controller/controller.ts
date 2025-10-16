@@ -60,7 +60,6 @@ export default class DegreesController extends AbstractController {
     await degree.save()
 
     return this.buildJSONResponse({
-      message: 'Diplôme mis à jour avec succès',
       data: degree,
     })
   }
@@ -78,7 +77,6 @@ export default class DegreesController extends AbstractController {
     })
 
     return this.buildJSONResponse({
-      message: 'Diplôme créé avec succès',
       data: degree,
     })
   }

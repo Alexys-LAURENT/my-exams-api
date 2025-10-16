@@ -45,7 +45,7 @@ export default class ClassesController extends AbstractController {
     await theClass.delete()
 
     return this.buildJSONResponse({
-      data: theClass,
+      message: 'Class deleted successfully',
     })
   }
 

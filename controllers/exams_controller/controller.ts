@@ -135,8 +135,6 @@ export default class ExamsController extends AbstractController {
       time: content.time,
       imagePath: content.imagePath ?? null,
       idTeacher: content.idTeacher,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
     })
     return this.buildJSONResponse({ data: exam })
   }

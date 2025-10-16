@@ -4,8 +4,8 @@ import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
 import {
   createQuestionValidator,
-  examQuestionParamsValidator,
   onlyIdExamWithExistsValidator,
+  onlyIdQuestionWithExistsValidator,
 } from './validator.js'
 
 export default class QuestionsController extends AbstractController {
@@ -14,10 +14,13 @@ export default class QuestionsController extends AbstractController {
   }
 
   public async getQuestionsByIdForOneExam({ params }: HttpContext) {
-    const { idExam, idQuestion } = await examQuestionParamsValidator.validate(params)
+    const validExam = await onlyIdExamWithExistsValidator.validate(params)
+    const validQuestion = await onlyIdQuestionWithExistsValidator.validate(params, {
+      meta: { idExam: validExam.idExam },
+    })
     const question = await Question.query()
-      .where('id_question', idQuestion)
-      .andWhere('id_exam', idExam)
+      .where('id_question', validQuestion.idQuestion)
+      .andWhere('id_exam', validExam.idExam)
       .firstOrFail()
     return this.buildJSONResponse({ data: question })
   }

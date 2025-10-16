@@ -118,7 +118,6 @@ router
   })
   .prefix('/api/degrees')
 
-
 router
   .group(() => {
     router.post('/', [UsersResponsesController, 'createUsersResponse'])

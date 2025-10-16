@@ -11,7 +11,7 @@ export const createStudentValidator = vine.compile(
 )
 export const onlyIdClassWithExistsValidator = vine.compile(
   vine.object({
-    idClass: vine.string().exists(async (db, value) => {
+    idClass: vine.number().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()
       return row ? true : false
     }),
@@ -29,7 +29,7 @@ export const updateStudentValidator = vine.compile(
 
 export const onlyIdStudentWithExistsValidator = vine.compile(
   vine.object({
-    idStudent: vine.string().exists(async (db, value) => {
+    idStudent: vine.number().exists(async (db, value) => {
       const row = await db
         .from('users')
         .where('id_user', value)
@@ -42,11 +42,11 @@ export const onlyIdStudentWithExistsValidator = vine.compile(
 
 export const classStudentParamsValidator = vine.compile(
   vine.object({
-    idClass: vine.string().exists(async (db, value) => {
+    idClass: vine.number().exists(async (db, value) => {
       const row = await db.from('classes').where('id_class', value).first()
       return row ? true : false
     }),
-    idStudent: vine.string().exists(async (db, value) => {
+    idStudent: vine.number().exists(async (db, value) => {
       const row = await db
         .from('users')
         .where('id_user', value)
