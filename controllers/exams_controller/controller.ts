@@ -7,6 +7,7 @@ import Exam from '#models/exam'
 import ExamGrade from '#models/exam_grade'
 import Question from '#models/question'
 import UserResponse from '#models/user_response'
+import examService from '#services/exam_service'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
@@ -139,9 +140,34 @@ export default class ExamsController extends AbstractController {
     return this.buildJSONResponse({ data: exam })
   }
 
-  public async getOneExam({ params }: HttpContext) {
+  public async getOneExam({ params, auth }: HttpContext) {
+    const user = await auth.authenticate()
     const valid = await onlyIdExamWithExistsValidator.validate(params)
-    const theExam = await Exam.findOrFail(valid.idExam)
+    let theExam: Exam | null = null
+    if (user.accountType === 'student') {
+      const userClasses = await user.related('studentClasses').query()
+      theExam = await Exam.query()
+        .where('id_exam', valid.idExam)
+        .andWhereHas('classes', (query) => {
+          query.whereIn(
+            'classes.id_class',
+            userClasses.map((c) => c.idClass)
+          )
+        })
+        .first()
+
+      if (!theExam) {
+        throw new UnauthorizedException("You don't have access to this exam")
+      }
+    } else if (user.accountType === 'teacher') {
+      const teacherExams = await user.related('teacherExams').query()
+      theExam = teacherExams.find((exam) => exam.idExam === valid.idExam) || null
+      if (!theExam) {
+        throw new UnauthorizedException("You don't have access to this exam")
+      }
+    } else {
+      theExam = await Exam.findOrFail(valid.idExam)
+    }
     return this.buildJSONResponse({
       data: theExam,
     })
@@ -212,14 +238,114 @@ export default class ExamsController extends AbstractController {
       )
     }
 
-    await ExamGrade.create({
+    const newExamGrade = await ExamGrade.create({
       idExam: exam.idExam,
       idUser: user.idUser,
       status: 'en cours',
       note: undefined,
     })
 
-    return this.buildJSONResponse({ message: 'Exam started' })
+    const questionsOfExam = await Question.query()
+      .where('id_exam', valid.idExam)
+      .where('id_exam', valid.idExam)
+    const answersOfQuestions = await Answer.query()
+      .select(['id_answer', 'answer', 'id_question', 'id_exam'])
+      .where('id_exam', valid.idExam)
+      .andWhereIn(
+        'id_question',
+        questionsOfExam.map((q) => q.idQuestion)
+      )
+
+    const questionsWithAnswersOfExam = questionsOfExam.map((question) => {
+      return {
+        ...question.toJSON(),
+        answers: answersOfQuestions.filter((answer) => answer.idQuestion === question.idQuestion),
+      }
+    })
+
+    const allData = {
+      ...exam.toJSON(),
+      questions: questionsWithAnswersOfExam,
+    }
+
+    await examService.startExam(user.idUser, exam.idExam, newExamGrade.idExamGrade, exam.time * 60)
+
+    return this.buildJSONResponse({ message: 'Exam started', data: allData })
+  }
+
+  public async reTakeExam({ params, auth }: HttpContext) {
+    const user = await auth.authenticate()
+
+    if (user.accountType !== 'student') {
+      throw new UnauthorizedException('Only students can start an exam')
+    }
+
+    const valid = await onlyIdExamWithExistsValidator.validate(params)
+
+    const existingPendingExamGrade = await ExamGrade.query()
+      .where('id_exam', valid.idExam)
+      .andWhere('id_user', user.idUser)
+      .where('status', 'en cours')
+      .first()
+
+    if (!existingPendingExamGrade) {
+      throw new UnauthorizedException("You don't have any pending exam of this type")
+    }
+
+    const exam = await Exam.findOrFail(valid.idExam)
+
+    const questionsOfExam = await Question.query()
+      .where('id_exam', valid.idExam)
+      .where('id_exam', valid.idExam)
+    const answersOfQuestions = await Answer.query()
+      .select(['id_answer', 'answer', 'id_question', 'id_exam'])
+      .where('id_exam', valid.idExam)
+      .andWhereIn(
+        'id_question',
+        questionsOfExam.map((q) => q.idQuestion)
+      )
+    const userResponses = await UserResponse.query()
+      .where('id_exam', valid.idExam)
+      .andWhere('id_user', user.idUser)
+
+    const userResponsesAnswers = (await db
+      .query()
+      .from('user_responses_answers')
+      .whereIn(
+        'id_user_response',
+        userResponses.map((response) => response.idUserResponse)
+      )) as { id_user_response: number; id_answer: number; id_question: number; id_exam: number }[]
+
+    const questionsWithAnswersOfExam = questionsOfExam.map((question) => {
+      return {
+        ...question.toJSON(),
+        answers: answersOfQuestions.filter((answer) => answer.idQuestion === question.idQuestion),
+        ...(() => {
+          const userResponse = userResponses.find((ur) => ur.idQuestion === question.idQuestion)
+          if (userResponse) {
+            const selectedAnswers = userResponsesAnswers
+              .filter((ura) => ura.id_user_response === userResponse.idUserResponse)
+              .map((ura) => ura.id_answer)
+            return {
+              userResponse: {
+                idUserResponse: userResponse.idUserResponse,
+                custom: userResponse.custom,
+                selectedAnswers,
+              },
+            }
+          } else {
+            return {}
+          }
+        })(),
+      }
+    })
+
+    const allData = {
+      ...exam.toJSON(),
+      questions: questionsWithAnswersOfExam,
+    }
+
+    return this.buildJSONResponse({ message: 'Exam reTaked', data: allData })
   }
 
   public async stopExam({ params, auth }: HttpContext) {
@@ -231,148 +357,15 @@ export default class ExamsController extends AbstractController {
 
     const valid = await onlyIdExamWithExistsValidator.validate(params)
 
-    // Récupérer l'examen et vérifier l'ExamGrade en cours
-    const [exam, pendingExamGrade] = await Promise.all([
-      Exam.findOrFail(valid.idExam),
-      ExamGrade.query()
-        .where('id_exam', valid.idExam)
-        .andWhere('id_user', user.idUser)
-        .andWhere('status', 'en cours')
-        .first(),
-    ])
+    const res = await examService.stopExam(user.idUser, valid.idExam)
 
-    if (!pendingExamGrade) {
-      throw new ClientAccessibleException("You don't have any pending exam of this type")
+    if ('error' in res) {
+      console.log(res)
+      throw new ClientAccessibleException(res.message)
     }
-
-    // Récupérer toutes les données nécessaires en une seule fois
-    const [questionsOfExam, userResponses, allAnswers] = await Promise.all([
-      Question.query().where('id_exam', valid.idExam),
-      UserResponse.query().where('id_exam', valid.idExam).andWhere('id_user', user.idUser),
-      Answer.query().where('id_exam', valid.idExam),
-    ])
-
-    // Créer les réponses manquantes si nécessaire
-    const questionsWithoutResponse = questionsOfExam.filter((question) => {
-      return !userResponses.some((response) => response.idQuestion === question.idQuestion)
-    })
-
-    if (questionsWithoutResponse.length > 0) {
-      const newUserResponses = await UserResponse.createMany(
-        questionsWithoutResponse.map((question) => ({
-          idUser: user.idUser,
-          idExam: valid.idExam,
-          idQuestion: question.idQuestion,
-          custom: null,
-        }))
-      )
-      userResponses.push(...newUserResponses)
-    }
-
-    // Récupérer les réponses sélectionnées par l'utilisateur
-    const userResponsesAnswers = await db
-      .query()
-      .from('user_responses_answers')
-      .whereIn(
-        'id_user_response',
-        userResponses.map((response) => response.idUserResponse)
-      )
-
-    let totalScore = 0
-    let allQuestionsAreCorrectable = true
-    const evaluationsToCreate = []
-
-    // Traiter chaque question
-    for (const question of questionsOfExam) {
-      if (question.isQcm) {
-        // Filtrer les réponses pour cette question spécifique
-        const questionAnswers = allAnswers.filter(
-          (answer) => answer.idQuestion === question.idQuestion
-        )
-        const correctAnswers = questionAnswers.filter((answer) => answer.isCorrect)
-
-        // Trouver la réponse utilisateur pour cette question
-        const userResponse = userResponses.find(
-          (response) => response.idQuestion === question.idQuestion
-        )
-        if (!userResponse) continue
-
-        // Réponses sélectionnées par l'utilisateur pour cette question
-        const userSelectedAnswers = userResponsesAnswers.filter(
-          (ura) => ura.id_user_response === userResponse.idUserResponse
-        )
-
-        let questionScore = 0
-
-        if (question.isMultiple) {
-          // Question à choix multiples : toutes les bonnes réponses ET aucune mauvaise
-          const hasAllCorrectAnswers = correctAnswers.every((correctAnswer) =>
-            userSelectedAnswers.some((ura) => ura.id_answer === correctAnswer.idAnswer)
-          )
-
-          const hasOnlyCorrectAnswers = userSelectedAnswers.every((userAnswer) =>
-            correctAnswers.some((correctAnswer) => correctAnswer.idAnswer === userAnswer.id_answer)
-          )
-
-          if (hasAllCorrectAnswers && hasOnlyCorrectAnswers && userSelectedAnswers.length > 0) {
-            questionScore = Number.parseInt(question.maxPoints as unknown as string)
-          }
-        } else {
-          // Question à choix unique : exactement une réponse et elle doit être correcte
-          if (userSelectedAnswers.length === 1) {
-            const selectedAnswer = userSelectedAnswers[0]
-            const isCorrect = correctAnswers.some(
-              (correctAnswer) => correctAnswer.idAnswer === selectedAnswer.id_answer
-            )
-
-            if (isCorrect) {
-              questionScore = Number.parseInt(question.maxPoints as unknown as string)
-            }
-          }
-        }
-
-        // Préparer l'évaluation à créer
-        evaluationsToCreate.push({
-          note: questionScore,
-          id_student: user.idUser,
-          id_teacher: exam.idTeacher, // Utilisation de l'idTeacher de l'examen
-          id_user_response: userResponse.idUserResponse,
-          created_at: DateTime.now().toSQL(),
-          updated_at: DateTime.now().toSQL(),
-        })
-
-        totalScore += questionScore
-      } else {
-        // Question non QCM : correction manuelle requise
-        allQuestionsAreCorrectable = false
-      }
-    }
-
-    // Créer toutes les évaluations en une seule requête
-    if (evaluationsToCreate.length > 0) {
-      await db.table('evaluations').multiInsert(evaluationsToCreate)
-    }
-
-    // Mettre à jour l'ExamGrade selon le statut
-    const updateData: any = {
-      updatedAt: DateTime.now(),
-    }
-
-    if (allQuestionsAreCorrectable) {
-      updateData.status = 'corrigé'
-      updateData.note = totalScore
-    } else {
-      updateData.status = 'à corrigé'
-    }
-
-    await pendingExamGrade.merge(updateData).save()
 
     return this.buildJSONResponse({
       message: 'Exam stopped successfully',
-      data: {
-        status: allQuestionsAreCorrectable ? 'corrigé' : 'à corrigé',
-        ...(allQuestionsAreCorrectable && { score: totalScore }),
-      },
     })
   }
 
@@ -427,7 +420,7 @@ export default class ExamsController extends AbstractController {
 
     const recap = {
       ...exam.toJSON(),
-      quetions: questions.map((question) => {
+      questions: questions.map((question) => {
         const questionAnswers = answers.filter(
           (answer) => answer.idQuestion === question.idQuestion
         )

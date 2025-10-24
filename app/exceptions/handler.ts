@@ -20,6 +20,8 @@ export default class HttpExceptionHandler extends ExceptionHandler {
    */
 
   async handle(error: unknown, ctx: HttpContext) {
+    console.log(ctx.request.method(), ctx.request.url())
+
     if (error instanceof vineErrors.E_VALIDATION_ERROR) {
       let shouldIncludeExists = false
       if (error.messages && Array.isArray(error.messages)) {

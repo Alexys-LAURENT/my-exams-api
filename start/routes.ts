@@ -101,15 +101,16 @@ router
   .group(() => {
     router.get('/:idExam/questions/count', [QuestionsController, 'getQuestionsCountForOneExam'])
     router.get(':idExam', [ExamsController, 'getOneExam'])
-    router.get('/:idExam/questions/:idQuestion', [
-      QuestionsController,
-      'getQuestionsByIdForOneExam',
-    ])
-    router.get('/:idExam/questions/:idQuestion/answers', [
-      AnswersController,
-      'getAnswersByQuestionsForExam',
-    ])
+    // router.get('/:idExam/questions/:idQuestion', [
+    //   QuestionsController,
+    //   'getQuestionsByIdForOneExam',
+    // ])
+    // router.get('/:idExam/questions/:idQuestion/answers', [
+    //   AnswersController,
+    //   'getAnswersByQuestionsForExam',
+    // ])
     router.post('/:idExam/start', [ExamsController, 'startExam']).use(middleware.auth())
+    router.post('/:idExam/retake', [ExamsController, 'reTakeExam']).use(middleware.auth())
     router.post('/:idExam/stop', [ExamsController, 'stopExam']).use(middleware.auth())
     router.post('/', [ExamsController, 'createExam'])
     router.post('/:idExam/questions', [QuestionsController, 'createQuestion'])
@@ -129,5 +130,6 @@ router
 router
   .group(() => {
     router.post('/', [UsersResponsesController, 'createUsersResponse'])
+    router.put('/:idUserResponse', [UsersResponsesController, 'updateUsersResponse'])
   })
   .prefix('/api/users_responses')

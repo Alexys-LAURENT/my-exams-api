@@ -52,3 +52,12 @@ export const checkCustomOrNotValidator = vine.compile(
     ]),
   })
 )
+
+export const updateUsersResponseValidator = vine.compile(
+  vine.object({
+    idUserResponse: vine.number().exists(async (db, value) => {
+      const row = await db.from('user_responses').where('id_user_response', value).first()
+      return row ? true : false
+    }),
+  })
+)
