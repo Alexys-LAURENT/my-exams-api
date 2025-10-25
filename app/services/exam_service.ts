@@ -70,7 +70,6 @@ class ExamService {
     }, 1000)
 
     this.activeExams.set(key, activeExam)
-    console.log(this.activeExams)
 
     console.log(`[ExamTimer] Examen ${examId} démarré pour l'utilisateur ${userId}`)
 
@@ -127,9 +126,7 @@ class ExamService {
    */
   private async finishExam(userId: number, examId: number, reason: 'timeout' | 'stopped') {
     const key = this.getKey(userId, examId)
-    console.log(this.activeExams)
     const activeExam = this.activeExams.get(key)
-    console.log(activeExam)
 
     if (!activeExam) {
       console.log(`[ExamTimer] Tentative de terminer un examen non actif: ${examId}`)
@@ -340,6 +337,31 @@ class ExamService {
   getActiveExam(userId: number, examId: number): ActiveExam | undefined {
     const key = this.getKey(userId, examId)
     return this.activeExams.get(key)
+  }
+
+  /**
+   * Récupère le temps restant pour un examen en cours
+   * @returns Un objet contenant le temps écoulé, restant et la durée totale en secondes, ou undefined si l'examen n'est pas actif
+   */
+  getRemainingTime(
+    userId: number,
+    examId: number
+  ):
+    | { elapsedInSecondes: number; remainingInSecondes: number; durationInSecondes: number }
+    | undefined {
+    const activeExam = this.getActiveExam(userId, examId)
+    if (!activeExam) {
+      return undefined
+    }
+
+    const elapsed = DateTime.now().diff(activeExam.startTime, 'seconds').seconds
+    const remaining = activeExam.duration - elapsed
+
+    return {
+      elapsedInSecondes: Math.floor(elapsed),
+      remainingInSecondes: Math.max(0, Math.floor(remaining)),
+      durationInSecondes: activeExam.duration,
+    }
   }
 
   /**

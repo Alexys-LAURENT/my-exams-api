@@ -294,6 +294,22 @@ export default class ExamsController extends AbstractController {
 
     const exam = await Exam.findOrFail(valid.idExam)
 
+    const currentExamSessionData = examService.getRemainingTime(user.idUser, valid.idExam)
+    if (!currentExamSessionData) {
+      throw new ClientAccessibleException(
+        'No active exam session found. Please start the exam again.'
+      )
+    }
+
+    if (currentExamSessionData.remainingInSecondes < 30) {
+      await examService.stopExam(user.idUser, valid.idExam)
+      return this.buildJSONResponse({
+        message: 'Exam stopped because not enough time remaining to retake.',
+        data: null,
+        forcedStop: true,
+      })
+    }
+
     const questionsOfExam = await Question.query()
       .where('id_exam', valid.idExam)
       .where('id_exam', valid.idExam)
@@ -360,7 +376,6 @@ export default class ExamsController extends AbstractController {
     const res = await examService.stopExam(user.idUser, valid.idExam)
 
     if ('error' in res) {
-      console.log(res)
       throw new ClientAccessibleException(res.message)
     }
 
