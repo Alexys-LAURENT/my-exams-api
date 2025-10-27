@@ -10,6 +10,10 @@ export const createUsersResponseValidator = vine.compile(
       const row = await db.from('questions').where('id_question', value).first()
       return row ? true : false
     }),
+    idClass: vine.number().exists(async (db, value) => {
+      const row = await db.from('classes').where('id_class', value).first()
+      return row ? true : false
+    }),
   })
 )
 
@@ -57,6 +61,15 @@ export const updateUsersResponseValidator = vine.compile(
   vine.object({
     idUserResponse: vine.number().exists(async (db, value) => {
       const row = await db.from('user_responses').where('id_user_response', value).first()
+      return row ? true : false
+    }),
+  })
+)
+
+export const onlyIdClassWithExistsValidator = vine.compile(
+  vine.object({
+    idClass: vine.number().exists(async (db, value) => {
+      const row = await db.from('classes').where('id_class', value).first()
       return row ? true : false
     }),
   })

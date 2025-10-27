@@ -9,6 +9,7 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
+const EvaluationsController = () => import('../controllers/evaluations_controller/controller.js')
 const ExamGradesController = () => import('../controllers/exam_grades_controller/controller.js')
 const ClassesController = () => import('../controllers/classes_controller/controller.js')
 const ExamsController = () => import('../controllers/exams_controller/controller.js')
@@ -61,6 +62,22 @@ router
       .put(':idClass/exams/:idExam', [ExamsController, 'putExamsForClass'])
       .use(middleware.auth())
     router.get(':idClass/exams', [ExamsController, 'getExamsOfClass']).use(middleware.auth())
+    router.get(':idClass/students/:idStudent/exams/:idExam/exam_grades', [
+      ExamGradesController,
+      'getExamGradeForOneStudent',
+    ])
+    router
+      .post(':idClass/students/:idStudent/exams/:idExam/start', [ExamsController, 'startExam'])
+      .use(middleware.auth())
+    router
+      .post(':idClass/students/:idStudent/exams/:idExam/stop', [ExamsController, 'stopExam'])
+      .use(middleware.auth())
+    router
+      .post(':idClass/students/:idStudent/exams/:idExam/retake', [ExamsController, 'reTakeExam'])
+      .use(middleware.auth())
+    router
+      .get(':idClass/students/:idStudent/exams/:idExam/recap', [ExamsController, 'recap'])
+      .use(middleware.auth())
   })
   .prefix('/api/classes')
 
@@ -72,18 +89,8 @@ router
     router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
     router.get('/', [StudentsController, 'getAll'])
     router.get('/:idStudent', [StudentsController, 'getOneStudent'])
-    router.get('/:idStudent/exams/:idExam/recap', [ExamsController, 'recap']).use(middleware.auth())
   })
   .prefix('/api/students')
-
-router
-  .group(() => {
-    router.get('/students/:idStudent/exams/:idExam', [
-      ExamGradesController,
-      'getExamGradeForOneStudent',
-    ])
-  })
-  .prefix('/api/exam_grades')
 
 router
   .group(() => {
@@ -101,17 +108,6 @@ router
   .group(() => {
     router.get('/:idExam/questions/count', [QuestionsController, 'getQuestionsCountForOneExam'])
     router.get(':idExam', [ExamsController, 'getOneExam'])
-    // router.get('/:idExam/questions/:idQuestion', [
-    //   QuestionsController,
-    //   'getQuestionsByIdForOneExam',
-    // ])
-    // router.get('/:idExam/questions/:idQuestion/answers', [
-    //   AnswersController,
-    //   'getAnswersByQuestionsForExam',
-    // ])
-    router.post('/:idExam/start', [ExamsController, 'startExam']).use(middleware.auth())
-    router.post('/:idExam/retake', [ExamsController, 'reTakeExam']).use(middleware.auth())
-    router.post('/:idExam/stop', [ExamsController, 'stopExam']).use(middleware.auth())
     router.post('/', [ExamsController, 'createExam'])
     router.post('/:idExam/questions', [QuestionsController, 'createQuestion'])
     router.post('/:idExam/questions/:idQuestion/answers', [AnswersController, 'createAnswers'])
@@ -133,3 +129,16 @@ router
     router.put('/:idUserResponse', [UsersResponsesController, 'updateUsersResponse'])
   })
   .prefix('/api/users_responses')
+
+router
+  .group(() => {
+    router.put('/:idExamGrade', [ExamGradesController, 'updateExamGrade']).use(middleware.auth())
+  })
+  .prefix('/api/exam_grades')
+
+router
+  .group(() => {
+    router.post('/', [EvaluationsController, 'createEvaluation']).use(middleware.auth())
+    router.put('/:idEvaluation', [EvaluationsController, 'updateEvaluation']).use(middleware.auth())
+  })
+  .prefix('/api/evaluations')

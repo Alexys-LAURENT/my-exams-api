@@ -12,6 +12,7 @@ interface ActiveExam {
   examGradeId: number
   examId: number
   userId: number
+  classId: number
   startTime: DateTime
   duration: number // en secondes
   timer?: NodeJS.Timeout
@@ -39,15 +40,21 @@ class ExamService {
     return ExamService.instance
   }
 
-  private getKey(userId: number, examId: number): string {
-    return `${userId}-${examId}`
+  private getKey(userId: number, classId: number, examId: number): string {
+    return `${userId}-${classId}-${examId}`
   }
 
   /**
    * Démarre un examen
    */
-  async startExam(userId: number, examId: number, examGradeId: number, duration: number) {
-    const key = this.getKey(userId, examId)
+  async startExam(
+    userId: number,
+    classId: number,
+    examId: number,
+    examGradeId: number,
+    duration: number
+  ) {
+    const key = this.getKey(userId, classId, examId)
 
     // Si un examen est déjà en cours, on le nettoie
     if (this.activeExams.has(key)) {
@@ -60,6 +67,7 @@ class ExamService {
       examGradeId,
       examId,
       userId,
+      classId,
       startTime,
       duration,
     }
@@ -71,7 +79,9 @@ class ExamService {
 
     this.activeExams.set(key, activeExam)
 
-    console.log(`[ExamTimer] Examen ${examId} démarré pour l'utilisateur ${userId}`)
+    console.log(
+      `[ExamTimer] Examen ${examId} démarré pour l'utilisateur ${userId} de la classe ${classId}`
+    )
 
     // Émettre immédiatement le premier tick
     this.emitTick(activeExam, 0)
@@ -93,7 +103,7 @@ class ExamService {
     // Si le temps est écoulé, terminer automatiquement l'examen
     if (remaining <= 0) {
       console.log(`[ExamTimer] Temps écoulé pour l'examen ${activeExam.examId}`)
-      this.finishExam(activeExam.userId, activeExam.examId, 'timeout')
+      this.finishExam(activeExam.userId, activeExam.classId, activeExam.examId, 'timeout')
     }
   }
 
@@ -106,7 +116,9 @@ class ExamService {
     const remaining = activeExam.duration - elapsed
 
     this.io
-      .to(`exam-session-user-${activeExam.userId}-exam-${activeExam.examId}`)
+      .to(
+        `exam-session-user-${activeExam.userId}-class-${activeExam.classId}-exam-${activeExam.examId}`
+      )
       .emit('exam:tick', {
         elapsedInSecondes: Math.floor(elapsed),
         remainingInSecondes: Math.max(0, Math.floor(remaining)),
@@ -117,15 +129,20 @@ class ExamService {
   /**
    * Arrête manuellement un examen (utilisé dans le controller)
    */
-  async stopExam(userId: number, examId: number) {
-    return await this.finishExam(userId, examId, 'stopped')
+  async stopExam(userId: number, classId: number, examId: number) {
+    return await this.finishExam(userId, classId, examId, 'stopped')
   }
 
   /**
    * Termine un examen et applique la logique de correction
    */
-  private async finishExam(userId: number, examId: number, reason: 'timeout' | 'stopped') {
-    const key = this.getKey(userId, examId)
+  private async finishExam(
+    userId: number,
+    classId: number,
+    examId: number,
+    reason: 'timeout' | 'stopped'
+  ) {
+    const key = this.getKey(userId, classId, examId)
     const activeExam = this.activeExams.get(key)
 
     if (!activeExam) {
@@ -138,12 +155,12 @@ class ExamService {
 
     try {
       // Appliquer la logique de correction
-      await this.processExamCorrection(userId, examId, activeExam.examGradeId)
+      await this.processExamCorrection(userId, classId, examId, activeExam.examGradeId)
 
       // Émettre un événement de fin via Socket.IO
       if (this.io) {
         this.io
-          .to(`exam-session-user-${activeExam.userId}-exam-${activeExam.examId}`)
+          .to(`exam-session-user-${activeExam.userId}-class-${classId}-exam-${activeExam.examId}`)
           .emit('exam:finished', {
             success: true,
             message: 'Exam finished successfully',
@@ -151,7 +168,7 @@ class ExamService {
       }
 
       console.log(
-        `[ExamTimer] Examen ${examId} terminé pour l'utilisateur ${userId} (raison: ${reason})`
+        `[ExamTimer] Examen ${examId} terminé pour l'utilisateur ${userId} de la classe ${classId} (raison: ${reason})`
       )
       return { success: true, message: 'Exam finished successfully' }
     } catch (error) {
@@ -159,10 +176,12 @@ class ExamService {
 
       // Émettre un événement d'erreur
       if (this.io) {
-        this.io.to(`user-${userId}`).emit('exam:finished', {
-          error: true,
-          message: 'An error occurred while finishing the exam',
-        })
+        this.io
+          .to(`exam-session-user-${activeExam.userId}-class-${classId}-exam-${activeExam.examId}`)
+          .emit('exam:finished', {
+            error: true,
+            message: 'An error occurred while finishing the exam',
+          })
       }
       return { error: true, message: 'An error occurred while finishing the exam' }
     } finally {
@@ -176,6 +195,7 @@ class ExamService {
    */
   private async processExamCorrection(
     userId: number,
+    classId: number,
     examId: number,
     examGradeId: number
   ): Promise<{ status: string; score?: number }> {
@@ -184,6 +204,7 @@ class ExamService {
       .where('id_exam_grade', examGradeId)
       .andWhere('id_exam', examId)
       .andWhere('id_user', userId)
+      .andWhere('id_class', classId)
       .andWhere('status', 'en cours')
       .first()
 
@@ -334,8 +355,8 @@ class ExamService {
   /**
    * Récupère les informations d'un examen en cours
    */
-  getActiveExam(userId: number, examId: number): ActiveExam | undefined {
-    const key = this.getKey(userId, examId)
+  getActiveExam(userId: number, classId: number, examId: number): ActiveExam | undefined {
+    const key = this.getKey(userId, classId, examId)
     return this.activeExams.get(key)
   }
 
@@ -345,11 +366,12 @@ class ExamService {
    */
   getRemainingTime(
     userId: number,
+    classId: number,
     examId: number
   ):
     | { elapsedInSecondes: number; remainingInSecondes: number; durationInSecondes: number }
     | undefined {
-    const activeExam = this.getActiveExam(userId, examId)
+    const activeExam = this.getActiveExam(userId, classId, examId)
     if (!activeExam) {
       return undefined
     }

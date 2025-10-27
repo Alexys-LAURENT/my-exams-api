@@ -9,6 +9,7 @@ import AbstractController from '../abstract_controller.js'
 import {
   checkCustomOrNotValidator,
   createUsersResponseValidator,
+  onlyIdClassWithExistsValidator,
   updateUsersResponseValidator,
 } from './validator.js'
 
@@ -28,6 +29,7 @@ export default class UsersResponsesController extends AbstractController {
     const pendingExamGrade = await ExamGrade.query()
       .where('id_exam', content.idExam)
       .andWhere('id_user', user.idUser)
+      .andWhere('id_class', content.idClass)
       .andWhere('status', 'en cours')
       .first()
 
@@ -104,12 +106,14 @@ export default class UsersResponsesController extends AbstractController {
     }
 
     const validParams = await updateUsersResponseValidator.validate(params)
+    const classData = await onlyIdClassWithExistsValidator.validate(request.body())
 
     const theUserResponse = await UserResponse.findOrFail(validParams.idUserResponse)
 
     const pendingExamGrade = await ExamGrade.query()
       .where('id_exam', theUserResponse.idExam)
       .andWhere('id_user', user.idUser)
+      .andWhere('id_class', classData.idClass)
       .andWhere('status', 'en cours')
       .first()
 

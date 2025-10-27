@@ -17,8 +17,9 @@ import {
   examDateValidator,
   getExamsOfClassQueryValidator,
   idClassAndIdExamWithExistsValidator,
-  idStudentAndIdExamWithExistsValidator,
+  idStudentAndIdExamAndIdClassWithExistsValidator,
   onlyIdClassWithExistsValidator,
+  onlyIdExamAndIdClassAndIdStudentWithExistsValidator,
   onlyIdExamWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
 } from './validator.js'
@@ -209,15 +210,14 @@ export default class ExamsController extends AbstractController {
       throw new UnauthorizedException('Only students can start an exam')
     }
 
-    const valid = await onlyIdExamWithExistsValidator.validate(params)
+    const valid = await onlyIdExamAndIdClassAndIdStudentWithExistsValidator.validate(params)
+
+    if (user.idUser !== valid.idStudent) {
+      throw new UnauthorizedException('You can only start an exam for yourself')
+    }
 
     // On récupère la classe actuelle de l'étudiant
-    const currentUserClass = await user
-      .related('studentClasses')
-      .query()
-      .where('classes.start_date', '<=', DateTime.now().toSQL())
-      .where('classes.end_date', '>=', DateTime.now().toSQL())
-      .firstOrFail()
+    const currentUserClass = await Class.findOrFail(valid.idClass)
 
     // On vérifie que l'examen est bien lié à la classe de l'étudiant et que la période de réalisation est valide
     const exam = await Exam.query()
@@ -241,6 +241,7 @@ export default class ExamsController extends AbstractController {
     const newExamGrade = await ExamGrade.create({
       idExam: exam.idExam,
       idUser: user.idUser,
+      idClass: currentUserClass.idClass,
       status: 'en cours',
       note: undefined,
     })
@@ -268,7 +269,13 @@ export default class ExamsController extends AbstractController {
       questions: questionsWithAnswersOfExam,
     }
 
-    await examService.startExam(user.idUser, exam.idExam, newExamGrade.idExamGrade, exam.time * 60)
+    await examService.startExam(
+      user.idUser,
+      valid.idClass,
+      exam.idExam,
+      newExamGrade.idExamGrade,
+      exam.time * 60
+    )
 
     return this.buildJSONResponse({ message: 'Exam started', data: allData })
   }
@@ -280,11 +287,16 @@ export default class ExamsController extends AbstractController {
       throw new UnauthorizedException('Only students can start an exam')
     }
 
-    const valid = await onlyIdExamWithExistsValidator.validate(params)
+    const valid = await onlyIdExamAndIdClassAndIdStudentWithExistsValidator.validate(params)
+
+    if (user.idUser !== valid.idStudent) {
+      throw new UnauthorizedException('You can only retake an exam for yourself')
+    }
 
     const existingPendingExamGrade = await ExamGrade.query()
       .where('id_exam', valid.idExam)
       .andWhere('id_user', user.idUser)
+      .andWhere('id_class', valid.idClass)
       .where('status', 'en cours')
       .first()
 
@@ -294,7 +306,11 @@ export default class ExamsController extends AbstractController {
 
     const exam = await Exam.findOrFail(valid.idExam)
 
-    const currentExamSessionData = examService.getRemainingTime(user.idUser, valid.idExam)
+    const currentExamSessionData = examService.getRemainingTime(
+      user.idUser,
+      valid.idClass,
+      valid.idExam
+    )
     if (!currentExamSessionData) {
       throw new ClientAccessibleException(
         'No active exam session found. Please start the exam again.'
@@ -302,7 +318,7 @@ export default class ExamsController extends AbstractController {
     }
 
     if (currentExamSessionData.remainingInSecondes < 30) {
-      await examService.stopExam(user.idUser, valid.idExam)
+      await examService.stopExam(user.idUser, valid.idClass, valid.idExam)
       return this.buildJSONResponse({
         message: 'Exam stopped because not enough time remaining to retake.',
         data: null,
@@ -371,9 +387,13 @@ export default class ExamsController extends AbstractController {
       throw new UnauthorizedException('Only students can stop an exam')
     }
 
-    const valid = await onlyIdExamWithExistsValidator.validate(params)
+    const valid = await onlyIdExamAndIdClassAndIdStudentWithExistsValidator.validate(params)
 
-    const res = await examService.stopExam(user.idUser, valid.idExam)
+    if (user.idUser !== valid.idStudent) {
+      throw new UnauthorizedException('You can only stop an exam for yourself')
+    }
+
+    const res = await examService.stopExam(user.idUser, valid.idClass, valid.idExam)
 
     if ('error' in res) {
       throw new ClientAccessibleException(res.message)
@@ -385,7 +405,7 @@ export default class ExamsController extends AbstractController {
   }
 
   public async recap({ params, auth }: HttpContext) {
-    const valid = await idStudentAndIdExamWithExistsValidator.validate(params)
+    const valid = await idStudentAndIdExamAndIdClassWithExistsValidator.validate(params)
     const loggedUser = await auth.authenticate()
 
     if (loggedUser.accountType === 'student' && loggedUser.idUser !== valid.idStudent) {
@@ -402,11 +422,38 @@ export default class ExamsController extends AbstractController {
     const examGrade = await ExamGrade.query()
       .where('id_user', valid.idStudent)
       .andWhere('id_exam', valid.idExam)
+      .andWhere('id_class', valid.idClass)
       .andWhereNot('status', 'en cours')
       .first()
 
     if (!examGrade) {
       throw new ClientAccessibleException("You don't have any completed exam of this type")
+    }
+
+    const relationExamClass = (await db
+      .from('exams_classes')
+      .where({
+        id_exam: valid.idExam,
+        id_class: valid.idClass,
+      })
+      .first()) as
+      | { id_exam: number; id_class: number; start_date: Date; end_date: Date }
+      | undefined
+
+    if (!relationExamClass) {
+      throw new ClientAccessibleException("This exam isn't associated with this class")
+    }
+
+    const isExamTimeFinished = DateTime.now() > DateTime.fromJSDate(relationExamClass.end_date)
+
+    if (!isExamTimeFinished && loggedUser.accountType === 'student') {
+      return this.buildJSONResponse({
+        data: {
+          ...exam.toJSON(),
+          examGrade: examGrade.toJSON(),
+          isExamTimeFinished,
+        },
+      })
     }
 
     // The questions of the exam
@@ -459,6 +506,7 @@ export default class ExamsController extends AbstractController {
         }
       }),
       examGrade: examGrade.toJSON(),
+      isExamTimeFinished,
     }
 
     return this.buildJSONResponse({ data: recap })
