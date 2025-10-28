@@ -426,10 +426,6 @@ export default class ExamsController extends AbstractController {
       .andWhereNot('status', 'en cours')
       .first()
 
-    if (!examGrade) {
-      throw new ClientAccessibleException("You don't have any completed exam of this type")
-    }
-
     const relationExamClass = (await db
       .from('exams_classes')
       .where({
@@ -450,7 +446,7 @@ export default class ExamsController extends AbstractController {
       return this.buildJSONResponse({
         data: {
           ...exam.toJSON(),
-          examGrade: examGrade.toJSON(),
+          examGrade: examGrade ? examGrade.toJSON() : null,
           isExamTimeFinished,
         },
       })
@@ -505,7 +501,7 @@ export default class ExamsController extends AbstractController {
           evaluation: evaluation ? evaluation.toJSON() : null,
         }
       }),
-      examGrade: examGrade.toJSON(),
+      examGrade: examGrade ? examGrade.toJSON() : null,
       isExamTimeFinished,
     }
 

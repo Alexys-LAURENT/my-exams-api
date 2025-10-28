@@ -9,6 +9,7 @@
 
 import router from '@adonisjs/core/services/router'
 import { middleware } from './kernel.js'
+const ExamsClassesController = () => import('../controllers/exams_classes_controller/controller.js')
 const EvaluationsController = () => import('../controllers/evaluations_controller/controller.js')
 const ExamGradesController = () => import('../controllers/exam_grades_controller/controller.js')
 const ClassesController = () => import('../controllers/classes_controller/controller.js')
@@ -142,3 +143,11 @@ router
     router.put('/:idEvaluation', [EvaluationsController, 'updateEvaluation']).use(middleware.auth())
   })
   .prefix('/api/evaluations')
+
+router
+  .group(() => {
+    router
+      .get('/exams/:idExam/classes/:idClass', [ExamsClassesController, 'getExamClassRelation'])
+      .use(middleware.auth())
+  })
+  .prefix('/api/exams_classes')
