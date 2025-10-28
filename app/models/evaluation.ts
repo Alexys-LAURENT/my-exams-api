@@ -20,6 +20,9 @@ export default class Evaluation extends BaseModel {
   @column({ columnName: 'id_user_response' })
   declare idUserResponse: number
 
+  @column({ columnName: 'commentary' })
+  declare commentary: string | null
+
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 

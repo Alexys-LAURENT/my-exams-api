@@ -1,3 +1,4 @@
+// import UnAuthorizedException from '#exceptions/un_authorized_exception'
 import Answer from '#models/answer'
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
@@ -31,20 +32,5 @@ export default class AnswersController extends AbstractController {
       createdAt: DateTime.now(),
     })
     return this.buildJSONResponse({ data: answer })
-  }
-
-  public async getAnswersByQuestionsForExam({ params }: HttpContext) {
-    const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: params.idExam })
-    const validQuestion = await onlyIdQuestionWithExistsValidator.validate(
-      {
-        idQuestion: params.idQuestion,
-      },
-      { meta: { idExam: validExam.idExam } }
-    )
-    const answers = await Answer.query()
-      .where('id_question', validQuestion.idQuestion)
-      .andWhere('id_exam', validExam.idExam)
-      .select(['id_answer', 'answer', 'created_at', 'updated_at'])
-    return this.buildJSONResponse({ data: answers })
   }
 }

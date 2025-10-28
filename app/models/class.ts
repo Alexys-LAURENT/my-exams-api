@@ -1,9 +1,10 @@
 import Degree from '#models/degree'
 import Exam from '#models/exam'
 import User from '#models/user'
-import { BaseModel, belongsTo, column, manyToMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, ManyToMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, belongsTo, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
+import ExamGrade from './exam_grade.js'
 
 export default class Class extends BaseModel {
   @column({ isPrimary: true, columnName: 'id_class' })
@@ -59,4 +60,9 @@ export default class Class extends BaseModel {
     pivotRelatedForeignKey: 'id_teacher',
   })
   declare teachers: ManyToMany<typeof User>
+
+  @hasMany(() => ExamGrade, {
+    foreignKey: 'idClass',
+  })
+  declare examGrades: HasMany<typeof ExamGrade>
 }

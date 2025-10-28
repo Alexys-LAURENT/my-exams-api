@@ -3,6 +3,7 @@ import User from '#models/user'
 import { BaseModel, belongsTo, column } from '@adonisjs/lucid/orm'
 import type { BelongsTo } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
+import Class from './class.js'
 
 export default class ExamGrade extends BaseModel {
   @column({ isPrimary: true, columnName: 'id_exam_grade' })
@@ -20,6 +21,9 @@ export default class ExamGrade extends BaseModel {
   @column({ columnName: 'id_exam' })
   declare idExam: number
 
+  @column({ columnName: 'id_class' })
+  declare idClass: number
+
   @column.dateTime({ autoCreate: true, columnName: 'created_at' })
   declare createdAt: DateTime
 
@@ -35,4 +39,9 @@ export default class ExamGrade extends BaseModel {
     foreignKey: 'idExam',
   })
   declare exam: BelongsTo<typeof Exam>
+
+  @belongsTo(() => Class, {
+    foreignKey: 'idClass',
+  })
+  declare class: BelongsTo<typeof Class>
 }

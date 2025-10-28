@@ -13,9 +13,9 @@ export const onlyIdQuestionWithExistsValidator = vine.compile(
   vine.object({
     idQuestion: vine.number().exists(async (db, value, field) => {
       const row = await db
-        .from('exams')
-        .where('id_exam', value)
-        .where('id_question', field.meta.idExam)
+        .from('questions')
+        .where('id_question', value)
+        .where('id_exam', field.meta.idExam)
         .first()
       return row ? true : false
     }),
