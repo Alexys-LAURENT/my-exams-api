@@ -9,7 +9,9 @@ import {
   onlyIdClassWithExistsValidator,
   onlyIdStudentWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
+  onlyIdExamWithExistsValidator,
 } from './validator.js'
+import Exam from '#models/exam'
 
 export default class ClassesController extends AbstractController {
   constructor() {
@@ -65,6 +67,15 @@ export default class ClassesController extends AbstractController {
       query.limit(limit)
     }
     const classes = await query
+    return this.buildJSONResponse({
+      data: classes,
+    })
+  }
+
+  public async getClassesForOneExam({ params }: HttpContext) {
+    const valid = await onlyIdExamWithExistsValidator.validate(params)
+    const theExam = await Exam.findOrFail(valid.idExam)
+    const classes = await theExam.related('classes').query()
     return this.buildJSONResponse({
       data: classes,
     })

@@ -49,3 +49,12 @@ export const limitQueryValidator = vine.compile(
     limit: vine.number().min(1).optional(),
   })
 )
+
+export const onlyIdExamWithExistsValidator = vine.compile(
+  vine.object({
+    idExam: vine.number().exists(async (db, value) => {
+      const row = await db.from('exams').where('id_exam', value).first()
+      return row ? true : false
+    }),
+  })
+)
