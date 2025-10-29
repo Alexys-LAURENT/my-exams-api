@@ -79,6 +79,7 @@ router
     router
       .get(':idClass/students/:idStudent/exams/:idExam/recap', [ExamsController, 'recap'])
       .use(middleware.auth())
+    router.get('exam/:idExam', [ClassesController, 'getClassesForOneExam'])
   })
   .prefix('/api/classes')
 
