@@ -23,7 +23,7 @@ export const examDateValidator = vine.compile(
 export const createExamValidator = vine.compile(
   vine.object({
     title: vine.string().trim().maxLength(100),
-    desc: vine.string().trim().maxLength(255),
+    desc: vine.string().trim().maxLength(255).nullable(),
     time: vine.number().min(0),
     imagePath: vine.string().optional(),
     idTeacher: vine
