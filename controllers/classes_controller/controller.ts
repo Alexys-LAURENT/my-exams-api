@@ -1,5 +1,6 @@
 import UnauthorizedException from '#exceptions/un_authorized_exception'
 import Class from '#models/class'
+import Exam from '#models/exam'
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
@@ -7,11 +8,10 @@ import {
   DeleteClassValidator,
   limitQueryValidator,
   onlyIdClassWithExistsValidator,
+  onlyIdExamWithExistsValidator,
   onlyIdStudentWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
-  onlyIdExamWithExistsValidator,
 } from './validator.js'
-import Exam from '#models/exam'
 
 export default class ClassesController extends AbstractController {
   constructor() {
