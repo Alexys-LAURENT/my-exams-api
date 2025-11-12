@@ -40,6 +40,7 @@ router
 
 router
   .group(() => {
+    router.get('/', [ClassesController, 'getAll']).use(middleware.auth())
     router.get(':idClass', [ClassesController, 'getOneClass'])
     router.delete('/:idClass', [ClassesController, 'deleteIdClass']).use(middleware.auth())
     router.get('/:idClasse/degrees', [DegreesController, 'getPromosOfClass'])
