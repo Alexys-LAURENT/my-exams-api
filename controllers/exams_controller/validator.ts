@@ -15,8 +15,8 @@ export const idClassAndIdExamWithExistsValidator = vine.compile(
 
 export const examDateValidator = vine.compile(
   vine.object({
-    start_date: vine.date({ formats: ['yyyy-MM-ddTHH:mm:ssZ'] }),
-    end_date: vine.date({ formats: ['yyyy-MM-ddTHH:mm:ssZ'] }),
+    start_date: vine.date(),
+    end_date: vine.date(),
   })
 )
 
