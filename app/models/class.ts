@@ -10,6 +10,9 @@ export default class Class extends BaseModel {
   @column({ isPrimary: true, columnName: 'id_class' })
   declare idClass: number
 
+  @column()
+  declare name: string
+
   @column.dateTime({ columnName: 'start_date' })
   declare startDate: DateTime
 

@@ -58,3 +58,15 @@ export const onlyIdExamWithExistsValidator = vine.compile(
     }),
   })
 )
+
+export const createClassValidator = vine.compile(
+  vine.object({
+    name: vine.string().trim().minLength(1).maxLength(255),
+    startDate: vine.date(),
+    endDate: vine.date(),
+    idDegree: vine.number().exists(async (db, value) => {
+      const row = await db.from('degrees').where('id_degree', value).first()
+      return !!row
+    }),
+  })
+)
