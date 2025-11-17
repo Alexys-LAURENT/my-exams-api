@@ -22,6 +22,7 @@ const QuestionsController = () => import('../controllers/questions_controller/co
 const TeachersController = () => import('../controllers/teachers_controller/controller.js')
 const UsersResponsesController = () =>
   import('../controllers/users_responses_controller/controller.js')
+const StatsController = () => import('../controllers/stats_controller/controller.js')
 
 /*
  █████  ██    ██ ████████ ██   ██ 
@@ -153,3 +154,43 @@ router
       .use(middleware.auth())
   })
   .prefix('/api/exams_classes')
+
+/*
+███████ ████████  █████  ████████ ███████ 
+██         ██    ██   ██    ██    ██      
+███████    ██    ███████    ██    ███████ 
+     ██    ██    ██   ██    ██         ██ 
+███████    ██    ██   ██    ██    ███████ 
+*/
+
+router
+  .group(() => {
+    // Moyenne générale d'un élève dans une classe
+    router
+      .get('/classes/:idClass/users/:idUser/average', [StatsController, 'getUserAverageInClass'])
+      .use(middleware.auth())
+
+    // Taux de participation moyen des élèves aux examens d'un prof pour une classe
+    router
+      .get('/teachers/:idTeacher/classes/:idClass/average_participation_rate', [
+        StatsController,
+        'getAverageParticipationRate',
+      ])
+      .use(middleware.auth())
+
+    // Moyenne de la classe pour un examen spécifique
+    router
+      .get('/exams/:idExam/classes/:idClass/average', [StatsController, 'getClassAverageForExam'])
+      .use(middleware.auth())
+
+    // Top 5 des questions les plus échouées d'un examen
+    router
+      .get('/exams/:idExam/most_failed_questions', [StatsController, 'getMostFailedQuestions'])
+      .use(middleware.auth())
+
+    // Moyenne générale d'une classe (tous examens confondus)
+    router
+      .get('/classes/:idClass/average', [StatsController, 'getClassGeneralAverage'])
+      .use(middleware.auth())
+  })
+  .prefix('/api/stats')
