@@ -70,7 +70,19 @@ export default class ExamGradesController extends AbstractController {
       .andWhere('id_class', validParams.idClass)
 
     if (validQuery.status) {
-      query.andWhere('status', validQuery.status)
+      let statusForDb
+      switch (validQuery.status) {
+        case 'in_progress':
+          statusForDb = 'en cours'
+          break
+        case 'to_correct':
+          statusForDb = 'à corriger'
+          break
+        case 'corrected':
+          statusForDb = 'corrigé'
+          break
+      }
+      query.andWhere('status', statusForDb)
     }
 
     if (validQuery.limit) {

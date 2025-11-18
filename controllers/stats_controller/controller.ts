@@ -26,10 +26,10 @@ export default class StatsController extends AbstractController {
    *
    * Étapes du calcul :
    * 1. Valide que l'utilisateur et la classe existent
-   * 2. Vérifie que l'étudiant appartient bien à cette classe (via students_classes)
-   * 3. Récupère tous les examens assignés à cette classe (via exams_classes)
-   * 4. Filtre les notes de l'étudiant pour ces examens (status != 'en cours' et note != null)
-   * 5. Calcule la moyenne arithmétique de toutes les notes obtenues
+   * 2. Vérifie que l'utilisateur appartient à cette classe (si c'est un étudiant)
+   * 3. Récupère tous les examens associés à cette classe
+   * 4. Récupère toutes les notes de l'utilisateur pour ces examens
+   * 5. Calcule la moyenne arithmétique de toutes ces notes
    *
    * @route GET /api/stats/classes/:idClass/users/:idUser/average
    * @param {HttpContext} context - Le contexte HTTP contenant les paramètres de la requête
@@ -58,7 +58,11 @@ export default class StatsController extends AbstractController {
     }
 
     // Récupérer tous les examens associés à cette classe
-    const examsOfClass = await db.from('exams_classes').select('id_exam').where('id_class', idClass)
+    const examsOfClass = await db
+      .from('exams_classes')
+      .select('id_exam')
+      .where('id_class', idClass)
+      .where('end_date', '<', new Date())
 
     const examIds = examsOfClass.map((e) => e.id_exam)
 
@@ -72,7 +76,7 @@ export default class StatsController extends AbstractController {
       .where('id_user', idUser)
       .andWhere('id_class', idClass)
       .whereIn('id_exam', examIds)
-      .andWhereNot('status', 'en cours')
+      .andWhere('status', 'corrigé')
       .whereNotNull('note')
 
     if (examGrades.length === 0) {
@@ -80,10 +84,13 @@ export default class StatsController extends AbstractController {
     }
 
     // Calcul de la moyenne : somme des notes / nombre de notes
-    const total = examGrades.reduce((sum, grade) => sum + (grade.note || 0), 0)
-    const average = total / examGrades.length
+    const totalExamGrades = examGrades
+      .map((eg) => Number.parseFloat(eg.note as unknown as string) || 0)
+      .reduce((a, b) => a + b, 0)
 
-    return this.buildJSONResponse({ data: { average: Math.round(average * 100) / 100 } })
+    const average = totalExamGrades / examsOfClass.length
+
+    return this.buildJSONResponse({ data: { average: average } })
   }
 
   /**
