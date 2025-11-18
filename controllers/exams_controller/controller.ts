@@ -48,13 +48,18 @@ export default class ExamsController extends AbstractController {
 
     if (status && userId) {
       if (status === 'completed') {
-        examsQuery.whereExists((query) => {
-          query
-            .from('exam_grades')
-            .whereRaw('exam_grades.id_exam = exams.id_exam')
-            .where('exam_grades.id_user', userId)
+        // Examens terminés (end_date dépassée) OU l'utilisateur a un exam_grade
+        examsQuery.where((query) => {
+          query.wherePivot('end_date', '<', today).orWhereExists((subQuery) => {
+            subQuery
+              .from('exam_grades')
+              .whereRaw('exam_grades.id_exam = exams.id_exam')
+              .where('exam_grades.id_user', userId)
+              .where('exam_grades.id_class', validParams.idClass)
+          })
         })
       } else if (status === 'pending') {
+        // Examens en cours (start_date <= maintenant <= end_date) ET pas d'exam_grade
         examsQuery
           .wherePivot('start_date', '<=', today)
           .wherePivot('end_date', '>=', today)
@@ -63,14 +68,11 @@ export default class ExamsController extends AbstractController {
               .from('exam_grades')
               .whereRaw('exam_grades.id_exam = exams.id_exam')
               .where('exam_grades.id_user', userId)
+              .where('exam_grades.id_class', validParams.idClass)
           })
       } else if (status === 'comming') {
-        examsQuery.wherePivot('start_date', '>', today).whereNotExists((query) => {
-          query
-            .from('exam_grades')
-            .whereRaw('exam_grades.id_exam = exams.id_exam')
-            .where('exam_grades.id_user', userId)
-        })
+        // Examens futurs (start_date > maintenant)
+        examsQuery.wherePivot('start_date', '>', today)
       }
     }
 
