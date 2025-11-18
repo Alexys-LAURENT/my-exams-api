@@ -70,3 +70,15 @@ export const createClassValidator = vine.compile(
     }),
   })
 )
+
+export const updateClassValidator = vine.compile(
+  vine.object({
+    name: vine.string().trim().minLength(1).maxLength(255).optional(),
+    startDate: vine.date({ formats: ['iso8601'] }).optional(),
+    endDate: vine.date({ formats: ['iso8601'] }).optional(),
+    idDegree: vine.number().exists(async (db, value) => {
+      const row = await db.from('degrees').where('id_degree', value).first()
+      return !!row
+    }),
+  })
+)

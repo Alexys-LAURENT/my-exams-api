@@ -13,6 +13,7 @@ import {
   onlyIdExamWithExistsValidator,
   onlyIdStudentWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
+  updateClassValidator,
 } from './validator.js'
 
 export default class ClassesController extends AbstractController {
@@ -111,6 +112,48 @@ export default class ClassesController extends AbstractController {
 
     return this.buildJSONResponse({
       data: newClass,
+    })
+  }
+
+  /**
+   * Met à jour une classe existante
+   *
+   * Cette méthode permet aux administrateurs de modifier les informations d'une classe.
+   * Les champs modifiables sont : `name`, `startDate`, `endDate`, et `idDegree`.
+   *
+   * @route PUT /api/classes/:idClass
+   * @param {HttpContext} context - Le contexte HTTP contenant les paramètres et le body de la requête
+   * @returns {Promise<Object>} { data: Class } - La classe mise à jour
+   */
+  public async updateClass({ params, request, auth }: HttpContext) {
+    const user = auth.user
+
+    if (!user || user.accountType !== 'admin') {
+      throw new UnauthorizedException('Seuls les admins peuvent modifier une classe.')
+    }
+
+    const validParams = await onlyIdClassWithExistsValidator.validate(params)
+    const validData = await updateClassValidator.validate(request.body())
+
+    const theClass = await Class.findOrFail(validParams.idClass)
+
+    if (validData.name) {
+      theClass.name = validData.name
+    }
+    if (validData.startDate) {
+      theClass.startDate = DateTime.fromJSDate(validData.startDate)
+    }
+    if (validData.endDate) {
+      theClass.endDate = DateTime.fromJSDate(validData.endDate)
+    }
+    if (validData.idDegree) {
+      theClass.idDegree = validData.idDegree
+    }
+
+    await theClass.save()
+
+    return this.buildJSONResponse({
+      data: theClass,
     })
   }
 }
