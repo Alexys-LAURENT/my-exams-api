@@ -4,6 +4,8 @@ import ExamGrade from '#models/exam_grade'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
 import {
+  getExamGradesForStudentValidator,
+  idStudentAndIdClassWithExistsValidator,
   idStudentAndIdExamAndIdClassWithExistsValidator,
   onlyIdExamGradeWithExistsValidator,
   updateExamGradeValidator,
@@ -47,5 +49,36 @@ export default class ExamGradesController extends AbstractController {
       .save()
 
     return this.buildJSONResponse({ data: examGrade })
+  }
+
+  /**
+   * Récupère toutes les examGrades d'un étudiant pour une classe spécifique avec des options de filtrage
+   *
+   * Cette méthode permet de récupérer les notes d'examens d'un étudiant pour une classe donnée avec la possibilité
+   * de limiter le nombre de résultats et de filtrer par statut (`in_progress`, `to_correct`, `corrected`).
+   *
+   * @route GET /api/exam_grades/classes/:idClass/student/:idStudent
+   * @param {HttpContext} context - Le contexte HTTP contenant les paramètres et la query string
+   * @returns {Promise<Object>} { data: ExamGrade[] } - Les examGrades filtrées
+   */
+  public async getExamGradesForStudentInOneClass({ params, request }: HttpContext) {
+    const validParams = await idStudentAndIdClassWithExistsValidator.validate(params)
+    const validQuery = await getExamGradesForStudentValidator.validate(request.qs())
+
+    const query = ExamGrade.query()
+      .where('id_user', validParams.idStudent)
+      .andWhere('id_class', validParams.idClass)
+
+    if (validQuery.status) {
+      query.andWhere('status', validQuery.status)
+    }
+
+    if (validQuery.limit) {
+      query.limit(validQuery.limit)
+    }
+
+    const examGrades = await query
+
+    return this.buildJSONResponse({ data: examGrades })
   }
 }

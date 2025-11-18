@@ -139,6 +139,12 @@ router
 router
   .group(() => {
     router.put('/:idExamGrade', [ExamGradesController, 'updateExamGrade']).use(middleware.auth())
+    router
+      .get('/classes/:idClass/student/:idStudent', [
+        ExamGradesController,
+        'getExamGradesForStudentInOneClass',
+      ])
+      .use(middleware.auth())
   })
   .prefix('/api/exam_grades')
 

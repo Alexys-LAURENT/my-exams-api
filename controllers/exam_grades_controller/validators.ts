@@ -45,3 +45,33 @@ export const onlyIdExamGradeWithExistsValidator = vine.compile(
     }),
   })
 )
+
+export const getExamGradesForStudentValidator = vine.compile(
+  vine.object({
+    limit: vine.number().min(1).optional(),
+    status: vine.enum(['in_progress', 'to_correct', 'corrected']).optional(),
+  })
+)
+
+export const idStudentAndIdClassWithExistsValidator = vine.compile(
+  vine.object({
+    idStudent: vine
+      .number()
+      .positive()
+      .exists(async (db, value) => {
+        const row = await db
+          .from('users')
+          .where('id_user', value)
+          .andWhere('account_type', 'student')
+          .first()
+        return !!row
+      }),
+    idClass: vine
+      .number()
+      .positive()
+      .exists(async (db, value) => {
+        const row = await db.from('classes').where('id_class', value).first()
+        return !!row
+      }),
+  })
+)
