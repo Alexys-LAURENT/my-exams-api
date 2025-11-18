@@ -1,3 +1,5 @@
+import UnAuthorizedException from '#exceptions/un_authorized_exception'
+import Exam from '#models/exam'
 import Question from '#models/question'
 import type { HttpContext } from '@adonisjs/core/http'
 import { DateTime } from 'luxon'
@@ -29,5 +31,23 @@ export default class QuestionsController extends AbstractController {
       createdAt: DateTime.now(),
     })
     return this.buildJSONResponse({ data: question })
+  }
+
+  public async getAllQuestionsForOneExam({ params, auth }: HttpContext) {
+    const loggedUser = await auth.authenticate()
+
+    if (loggedUser.accountType === 'student') {
+      throw new UnAuthorizedException("Vous n'êtes pas autorisé à voir ces questions.")
+    }
+
+    const validExam = await onlyIdExamWithExistsValidator.validate({ idExam: params.idExam })
+
+    const exam = await Exam.findOrFail(validExam.idExam)
+    if (exam.idTeacher !== loggedUser.idUser && loggedUser.accountType === 'teacher') {
+      throw new UnAuthorizedException("Vous n'êtes pas autorisé à voir ces questions.")
+    }
+
+    const questions = await Question.query().where('id_exam', validExam.idExam)
+    return this.buildJSONResponse({ data: questions })
   }
 }

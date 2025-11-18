@@ -117,6 +117,11 @@ router
     router.post('/', [ExamsController, 'createExam'])
     router.post('/:idExam/questions', [QuestionsController, 'createQuestion'])
     router.post('/:idExam/questions/:idQuestion/answers', [AnswersController, 'createAnswers'])
+    router.get('/:idExam/questions', [QuestionsController, 'getAllQuestionsForOneExam'])
+    router.get('/:idExam/questions/:idQuestion/answers', [
+      AnswersController,
+      'getAllAnswersForOneQuestionOfOneExam',
+    ])
   })
   .prefix('/api/exams')
 
@@ -175,7 +180,10 @@ router
   .group(() => {
     // Moyenne générale d'un élève dans une classe
     router
-      .get('/classes/:idClass/users/:idUser/average', [StatsController, 'getUserAverageInClass'])
+      .get('/classes/:idClass/users/:idUser/average', [
+        StatsController,
+        'getUserGeneraleAverageInClass',
+      ])
       .use(middleware.auth())
 
     // Taux de participation moyen des élèves aux examens d'un prof pour une classe

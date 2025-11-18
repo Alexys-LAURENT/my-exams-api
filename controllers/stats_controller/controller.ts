@@ -1,9 +1,10 @@
 import ClientAccessibleException from '#exceptions/client_accessible_exception'
-import Class from '#models/class'
 import ExamGrade from '#models/exam_grade'
 import Question from '#models/question'
+import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
+import StatsService from '../../app/services/stats_service.js'
 import AbstractController from '../abstract_controller.js'
 import {
   idClassAndIdUserValidator,
@@ -13,8 +14,9 @@ import {
   idTeacherAndIdClassValidator,
 } from './validator.js'
 
+@inject()
 export default class StatsController extends AbstractController {
-  constructor() {
+  constructor(private statsService: StatsService) {
     super()
   }
 
@@ -35,7 +37,7 @@ export default class StatsController extends AbstractController {
    * @param {HttpContext} context - Le contexte HTTP contenant les paramètres de la requête
    * @returns {Promise<Object>} { data: { average: number } } - Moyenne arrondie à 2 décimales, 0 si aucune note
    */
-  public async getUserAverageInClass({ params, auth }: HttpContext) {
+  public async getUserGeneraleAverageInClass({ params, auth }: HttpContext) {
     const loggedUser = await auth.authenticate()
     const validParams = await idClassAndIdUserValidator.validate(params)
     const { idClass, idUser } = validParams
@@ -57,38 +59,7 @@ export default class StatsController extends AbstractController {
       }
     }
 
-    // Récupérer tous les examens associés à cette classe
-    const examsOfClass = await db
-      .from('exams_classes')
-      .select('id_exam')
-      .where('id_class', idClass)
-      .where('end_date', '<', new Date())
-
-    const examIds = examsOfClass.map((e) => e.id_exam)
-
-    if (examIds.length === 0) {
-      return this.buildJSONResponse({ data: { average: 0 } })
-    }
-
-    // Récupérer les notes de l'utilisateur pour ces examens
-    // On exclut les examens 'en cours' et ceux sans note
-    const examGrades = await ExamGrade.query()
-      .where('id_user', idUser)
-      .andWhere('id_class', idClass)
-      .whereIn('id_exam', examIds)
-      .andWhere('status', 'corrigé')
-      .whereNotNull('note')
-
-    if (examGrades.length === 0) {
-      return this.buildJSONResponse({ data: { average: 0 } })
-    }
-
-    // Calcul de la moyenne : somme des notes / nombre de notes
-    const totalExamGrades = examGrades
-      .map((eg) => Number.parseFloat(eg.note as unknown as string) || 0)
-      .reduce((a, b) => a + b, 0)
-
-    const average = totalExamGrades / examsOfClass.length
+    const average = await this.statsService.getUserGeneralAverageInClass(idUser, idClass)
 
     return this.buildJSONResponse({ data: { average: average } })
   }
@@ -196,22 +167,9 @@ export default class StatsController extends AbstractController {
       throw new ClientAccessibleException("Cet examen n'est pas associé à cette classe")
     }
 
-    // Récupérer toutes les notes pour cet examen et cette classe
-    const examGrades = await ExamGrade.query()
-      .where('id_exam', idExam)
-      .andWhere('id_class', idClass)
-      .andWhereNot('status', 'en cours')
-      .whereNotNull('note')
+    const average = await this.statsService.getGeneralAverageForClassAndForOneExam(idClass, idExam)
 
-    if (examGrades.length === 0) {
-      return this.buildJSONResponse({ data: { average: 0 } })
-    }
-
-    // Calcul de la moyenne de classe
-    const total = examGrades.reduce((sum, grade) => sum + (grade.note || 0), 0)
-    const average = total / examGrades.length
-
-    return this.buildJSONResponse({ data: { average: Math.round(average * 100) / 100 } })
+    return this.buildJSONResponse({ data: { average: average } })
   }
 
   /**
@@ -303,34 +261,9 @@ export default class StatsController extends AbstractController {
     const validParams = await idClassValidator.validate(params)
     const { idClass } = validParams
 
-    // Vérifier que la classe existe
-    await Class.findOrFail(idClass)
-
-    // Récupérer tous les examens associés à cette classe
-    const examsOfClass = await db.from('exams_classes').select('id_exam').where('id_class', idClass)
-
-    const examIds = examsOfClass.map((e) => e.id_exam)
-
-    if (examIds.length === 0) {
-      return this.buildJSONResponse({ data: { idClass, average: 0 } })
-    }
-
-    // Récupérer toutes les notes pour ces examens et cette classe
-    // Cela inclut toutes les notes de tous les élèves pour tous les examens
-    const examGrades = await ExamGrade.query()
-      .where('id_class', idClass)
-      .whereIn('id_exam', examIds)
-      .andWhereNot('status', 'en cours')
-      .whereNotNull('note')
-
-    if (examGrades.length === 0) {
-      return this.buildJSONResponse({ data: { idClass, average: 0 } })
-    }
-
-    // Calcul de la moyenne générale de la classe
-    const total = examGrades.reduce((sum, grade) => sum + (grade.note || 0), 0)
-    const average = total / examGrades.length
-
-    return this.buildJSONResponse({ data: { idClass, average: Math.round(average * 100) / 100 } })
+    const totalAverage = await this.statsService.getGeneralAverageForClass(idClass)
+    return this.buildJSONResponse({
+      data: { average: totalAverage },
+    })
   }
 }
