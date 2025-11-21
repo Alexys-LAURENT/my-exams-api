@@ -41,6 +41,7 @@ export const createTeacherValidator = vine.compile(
     email: vine.string().email().trim(),
     password: vine.string().minLength(6),
     avatarPath: vine.string().optional(),
+    matiereIds: vine.array(vine.number()).minLength(1),
   })
 )
 

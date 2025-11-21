@@ -1,5 +1,6 @@
 import UnauthorizedException from '#exceptions/un_authorized_exception'
 import Matiere from '#models/matiere'
+import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import AbstractController from '../abstract_controller.js'
 import {
@@ -126,6 +127,14 @@ export default class MatieresController extends AbstractController {
     const { idMatiere, idTeacher } = validatedParams
 
     const matiere = await Matiere.findOrFail(idMatiere)
+
+    const teacher = await User.findOrFail(idTeacher)
+    const teacherMatieres = await teacher.related('matieres').query()
+
+    if (teacherMatieres.length <= 1) {
+      throw new UnauthorizedException('Un enseignant doit avoir au moins une matière assignée')
+    }
+
     await matiere.related('teachers').detach([idTeacher])
 
     return this.buildJSONResponse({ message: 'Enseignant retiré de la matière avec succès' })

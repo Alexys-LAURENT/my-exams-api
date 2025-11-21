@@ -82,6 +82,11 @@ export default class TeachersController extends AbstractController {
       avatarPath: content.avatarPath ?? null,
       accountType: 'teacher',
     })
+
+    if (content.matiereIds && content.matiereIds.length > 0) {
+      await teacher.related('matieres').attach(content.matiereIds)
+    }
+
     return this.buildJSONResponse({ data: teacher })
   }
 

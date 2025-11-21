@@ -18,7 +18,7 @@ export default class Matiere extends BaseModel {
   @manyToMany(() => User, {
     pivotTable: 'teacher_matieres',
     localKey: 'idMatiere',
-    pivotForeignKey: 'id_teacher',
+    pivotForeignKey: 'id_matiere',
     relatedKey: 'idUser',
     pivotRelatedForeignKey: 'id_teacher',
   })
