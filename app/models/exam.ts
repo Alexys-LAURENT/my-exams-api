@@ -4,6 +4,7 @@ import Question from '#models/question'
 import { BaseModel, belongsTo, column, hasMany, manyToMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
+import Matiere from './matiere.js'
 import User from './user.js'
 
 export default class Exam extends BaseModel {
@@ -21,6 +22,9 @@ export default class Exam extends BaseModel {
 
   @column()
   declare idTeacher: number
+
+  @column()
+  declare idMatiere: number
 
   @column({ columnName: 'image_path' })
   declare imagePath: string | null
@@ -57,4 +61,10 @@ export default class Exam extends BaseModel {
     localKey: 'idUser',
   })
   declare teacher: BelongsTo<typeof User>
+
+  @belongsTo(() => Matiere, {
+    foreignKey: 'idMatiere',
+    localKey: 'idMatiere',
+  })
+  declare matiere: BelongsTo<typeof Matiere>
 }

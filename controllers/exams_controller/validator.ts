@@ -37,6 +37,13 @@ export const createExamValidator = vine.compile(
           .first()
         return !!row
       }),
+    idMatiere: vine
+      .number()
+      .positive()
+      .exists(async (db, value) => {
+        const row = await db.from('matieres').where('id_matiere', value).first()
+        return !!row
+      }),
   })
 )
 

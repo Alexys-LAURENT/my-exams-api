@@ -208,7 +208,38 @@ export default class InsertDevDataSeeder extends BaseSeeder {
     console.log('✅ Enseignants associés aux classes')
 
     // ============================================
-    // 6. CRÉATION DES EXAMENS À PARTIR DES DONNÉES STRUCTURÉES
+    // 6. CRÉATION DES MATIÈRES À PARTIR DES DONNÉES STRUCTURÉES
+    // ============================================
+    console.log('🔄 Création des matières...')
+    const matieresData = [
+      { id_matiere: 1, nom: 'Informatique' },
+      { id_matiere: 2, nom: 'Mathématiques' },
+      { id_matiere: 3, nom: 'Physique' },
+      { id_matiere: 4, nom: 'Chimie' },
+      { id_matiere: 5, nom: 'Français' },
+      { id_matiere: 6, nom: 'Histoire' },
+      { id_matiere: 7, nom: 'Géographie' },
+      { id_matiere: 8, nom: 'Anglais' },
+      { id_matiere: 9, nom: 'Espagnol' },
+      { id_matiere: 10, nom: 'Économie' },
+    ]
+    await db.table('matieres').insert(matieresData)
+    console.log('✅ Matières créées')
+
+    // ============================================
+    // 7. ASSOCIATION DES MATIÈRES AUX ENSEIGNANTS
+    // ============================================
+    console.log('🔄 Association des matières aux enseignants...')
+    const matieres = matieresData.map((m) => m.id_matiere)
+    for (const teacher of teachers) {
+      // Chaque enseignant enseigne 3 à 5 matières
+      const teacherMatieres = this.getRandomElements(matieres, 3 + Math.floor(Math.random() * 3))
+      await teacher.related('matieres').attach(teacherMatieres)
+    }
+    console.log('✅ Matières associées aux enseignants')
+
+    // ============================================
+    // 8. CRÉATION DES EXAMENS À PARTIR DES DONNÉES STRUCTURÉES
     // ============================================
     console.log('🔄 Création des examens à partir des données structurées...')
 
@@ -219,15 +250,28 @@ export default class InsertDevDataSeeder extends BaseSeeder {
     for (const teacher of teachers) {
       const numExams = Math.min(3 + Math.floor(Math.random() * 3), examsData.length)
 
+      // Charger les matières de l'enseignant
+      await teacher.load('matieres')
+      const teacherMatieres = teacher.matieres
+
+      // Si l'enseignant n'a pas de matière, passer
+      if (teacherMatieres.length === 0) {
+        continue
+      }
+
       // Sélectionner des examens aléatoires depuis examsData
       const selectedExamsData = this.getRandomElements(examsData, numExams)
 
       for (const examData of selectedExamsData) {
+        // Assigner une matière aléatoire parmi celles de l'enseignant
+        const randomMatiere = this.getRandomElement(teacherMatieres)
+
         const exam = await Exam.create({
           idExam: examId++,
           title: examData.title,
           desc: examData.desc,
           idTeacher: teacher.idUser,
+          idMatiere: randomMatiere.idMatiere,
           imagePath: null,
           time: examData.time,
         })
@@ -237,7 +281,7 @@ export default class InsertDevDataSeeder extends BaseSeeder {
     console.log(`✅ ${exams.length} examens créés`)
 
     // ============================================
-    // 7. CRÉATION DES QUESTIONS ET RÉPONSES À PARTIR DES DONNÉES STRUCTURÉES
+    // 9. CRÉATION DES QUESTIONS ET RÉPONSES À PARTIR DES DONNÉES STRUCTURÉES
     // ============================================
     console.log('🔄 Création des questions et réponses à partir des données structurées...')
 
@@ -273,7 +317,7 @@ export default class InsertDevDataSeeder extends BaseSeeder {
     console.log('✅ Questions et réponses créées')
 
     // ============================================
-    // 8. ASSOCIATION DES EXAMENS AUX CLASSES (SEULEMENT SI LE PROF Y ENSEIGNE)
+    // 10. ASSOCIATION DES EXAMENS AUX CLASSES (SEULEMENT SI LE PROF Y ENSEIGNE)
     // ============================================
     console.log('🔄 Association des examens aux classes...')
 

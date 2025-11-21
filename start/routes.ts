@@ -22,6 +22,7 @@ const QuestionsController = () => import('../controllers/questions_controller/co
 const TeachersController = () => import('../controllers/teachers_controller/controller.js')
 const UsersResponsesController = () =>
   import('../controllers/users_responses_controller/controller.js')
+const MatieresController = () => import('../controllers/matieres_controller/controller.js')
 const StatsController = () => import('../controllers/stats_controller/controller.js')
 
 /*
@@ -107,6 +108,7 @@ router
     router.delete('/:idTeacher', [TeachersController, 'deleteTeacher'])
     router.put('/:idTeacher', [TeachersController, 'updateTeacher'])
     router.get(':idTeacher/classes', [ClassesController, 'getAllClassesForOneTeacher'])
+    router.get('/:idTeacher/matieres', [TeachersController, 'getMatieres'])
   })
   .prefix('/api/teachers')
 
@@ -167,6 +169,23 @@ router
       .use(middleware.auth())
   })
   .prefix('/api/exams_classes')
+
+router
+  .group(() => {
+    router.get('/', [MatieresController, 'getAll'])
+    router.get('/:idMatiere', [MatieresController, 'getMatiereFromId'])
+    router.post('/', [MatieresController, 'createMatiere']).use(middleware.auth())
+    router.put('/:idMatiere', [MatieresController, 'updateMatiere']).use(middleware.auth())
+    router.delete('/:idMatiere', [MatieresController, 'deleteMatiere']).use(middleware.auth())
+    router.get('/:idMatiere/teachers', [MatieresController, 'getTeachers'])
+    router
+      .put('/:idMatiere/teachers/:idTeacher', [MatieresController, 'addTeacherToMatiere'])
+      .use(middleware.auth())
+    router
+      .delete('/:idMatiere/teachers/:idTeacher', [MatieresController, 'removeTeacherFromMatiere'])
+      .use(middleware.auth())
+  })
+  .prefix('/api/matieres')
 
 /*
 ███████ ████████  █████  ████████ ███████ 

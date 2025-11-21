@@ -97,4 +97,14 @@ export default class TeachersController extends AbstractController {
     const teachers = await User.query().where('account_type', 'teacher')
     return this.buildJSONResponse({ data: teachers })
   }
+
+  /**
+   * Récupère les matières d'un enseignant
+   */
+  public async getMatieres({ params }: HttpContext) {
+    const valid = await onlyIdTeacherWithExistsValidator.validate(params)
+    const teacher = await User.findOrFail(valid.idTeacher)
+    const matieres = await teacher.related('matieres').query()
+    return this.buildJSONResponse({ data: matieres })
+  }
 }
