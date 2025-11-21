@@ -116,10 +116,12 @@ router
   .group(() => {
     router.get('/:idExam/questions/count', [QuestionsController, 'getQuestionsCountForOneExam'])
     router.get(':idExam', [ExamsController, 'getOneExam'])
+    router.put(':idExam', [ExamsController, 'updateExam'])
     router.post('/', [ExamsController, 'createExam'])
     router.post('/:idExam/questions', [QuestionsController, 'createQuestion'])
     router.post('/:idExam/questions/:idQuestion/answers', [AnswersController, 'createAnswers'])
     router.get('/:idExam/questions', [QuestionsController, 'getAllQuestionsForOneExam'])
+    router.get(':idExam/classes', [ExamsController, 'getExamClasses'])
     router.get('/:idExam/questions/:idQuestion/answers', [
       AnswersController,
       'getAllAnswersForOneQuestionOfOneExam',
