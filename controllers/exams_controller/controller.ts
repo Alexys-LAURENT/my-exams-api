@@ -15,13 +15,14 @@ import AbstractController from '../abstract_controller.js'
 import {
   createExamValidator,
   examDateValidator,
-  getExamsOfClassQueryValidator,
+  getStudentExamsValidator,
   idClassAndIdExamWithExistsValidator,
   idStudentAndIdExamAndIdClassWithExistsValidator,
   onlyIdClassWithExistsValidator,
   onlyIdExamAndIdClassAndIdStudentWithExistsValidator,
   onlyIdExamWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
+  onlyLimitValidator,
 } from './validator.js'
 
 export default class ExamsController extends AbstractController {
@@ -29,54 +30,18 @@ export default class ExamsController extends AbstractController {
     super()
   }
 
-  public async getExamsOfClass({ params, request, auth }: HttpContext) {
+  public async getAllExamsOfClass({ params, request }: HttpContext) {
     const validParams = await onlyIdClassWithExistsValidator.validate(params)
 
     const theClass = await Class.findOrFail(validParams.idClass)
 
-    const validQuery = await getExamsOfClassQueryValidator.validate(request.qs())
+    const validQuery = await onlyLimitValidator.validate(request.qs())
 
-    const { status, limit } = validQuery
+    const { limit } = validQuery
 
     let examsQuery = theClass.related('exams').query().pivotColumns(['start_date', 'end_date'])
 
-    const user = await auth.authenticate()
-
-    const userId = user.idUser
-
-    const today = DateTime.now().toSQL()
-
-    if (status && userId) {
-      if (status === 'completed') {
-        // Examens terminés (end_date dépassée) OU l'utilisateur a un exam_grade
-        examsQuery.where((query) => {
-          query.wherePivot('end_date', '<', today).orWhereExists((subQuery) => {
-            subQuery
-              .from('exam_grades')
-              .whereRaw('exam_grades.id_exam = exams.id_exam')
-              .where('exam_grades.id_user', userId)
-              .where('exam_grades.id_class', validParams.idClass)
-          })
-        })
-      } else if (status === 'pending') {
-        // Examens en cours (start_date <= maintenant <= end_date) ET pas d'exam_grade
-        examsQuery
-          .wherePivot('start_date', '<=', today)
-          .wherePivot('end_date', '>=', today)
-          .whereNotExists((query) => {
-            query
-              .from('exam_grades')
-              .whereRaw('exam_grades.id_exam = exams.id_exam')
-              .where('exam_grades.id_user', userId)
-              .where('exam_grades.id_class', validParams.idClass)
-          })
-      } else if (status === 'comming') {
-        // Examens futurs (start_date > maintenant)
-        examsQuery.wherePivot('start_date', '>', today)
-      }
-    }
-
-    if (limit !== null) {
+    if (limit) {
       examsQuery.limit(limit)
     }
 
@@ -92,6 +57,120 @@ export default class ExamsController extends AbstractController {
     })
 
     return this.buildJSONResponse({ data: serializedExams })
+  }
+
+  public async getExamsByTypeOfStudentInClass({ params, request, auth }: HttpContext) {
+    const { idClass, idStudent, status } = await getStudentExamsValidator.validate(params)
+    const user = await auth.authenticate()
+
+    if (user.accountType === 'student' && user.idUser !== idStudent) {
+      throw new UnauthorizedException('You can only access your own pending exams')
+    }
+
+    const theClass = await Class.findOrFail(idClass)
+
+    const validQuery = await onlyLimitValidator.validate(request.qs())
+
+    const { limit } = validQuery
+
+    let examsQuery = theClass.related('exams').query().pivotColumns(['start_date', 'end_date'])
+
+    const today = DateTime.now().toSQL()
+
+    if (status === 'completed') {
+      // Examens terminés (end_date dépassée) OU l'utilisateur a un exam_grade
+      examsQuery.where((query) => {
+        query.wherePivot('end_date', '<', today).orWhereExists((subQuery) => {
+          subQuery
+            .from('exam_grades')
+            .whereRaw('exam_grades.id_exam = exams.id_exam')
+            .where('exam_grades.id_user', idStudent)
+            .where('exam_grades.id_class', idClass)
+        })
+      })
+    } else if (status === 'pending') {
+      // Examens en cours (start_date <= maintenant <= end_date) ET pas d'exam_grade
+      examsQuery
+        .wherePivot('start_date', '<=', today)
+        .wherePivot('end_date', '>=', today)
+        .whereNotExists((query) => {
+          query
+            .from('exam_grades')
+            .whereRaw('exam_grades.id_exam = exams.id_exam')
+            .where('exam_grades.id_user', idStudent)
+            .where('exam_grades.id_class', idClass)
+        })
+    } else if (status === 'comming') {
+      // Examens futurs (start_date > maintenant)
+      examsQuery.wherePivot('start_date', '>', today)
+    }
+
+    // Tri par date de fin la plus proche d'aujourd'hui
+    examsQuery.orderBy('exams_classes.end_date', 'desc')
+
+    if (limit) {
+      examsQuery.limit(limit)
+    }
+
+    const exams = await examsQuery
+
+    const serializedExams = exams.map((exam) => {
+      return {
+        ...exam.toJSON(),
+
+        start_date: exam.$extras.pivot_start_date,
+        end_date: exam.$extras.pivot_end_date,
+      }
+    })
+
+    return this.buildJSONResponse({ data: serializedExams })
+  }
+
+  public async getCountExamsByTypeOfStudentInClass({ params, auth }: HttpContext) {
+    const { idClass, idStudent, status } = await getStudentExamsValidator.validate(params)
+    const user = await auth.authenticate()
+
+    if (user.accountType === 'student' && user.idUser !== idStudent) {
+      throw new UnauthorizedException('You can only access your own pending exams')
+    }
+
+    const theClass = await Class.findOrFail(idClass)
+
+    let examsQuery = theClass.related('exams').query()
+
+    const today = DateTime.now().toSQL()
+
+    if (status === 'completed') {
+      // Examens terminés (end_date dépassée) OU l'utilisateur a un exam_grade
+      examsQuery.where((query) => {
+        query.wherePivot('end_date', '<', today).orWhereExists((subQuery) => {
+          subQuery
+            .from('exam_grades')
+            .whereRaw('exam_grades.id_exam = exams.id_exam')
+            .where('exam_grades.id_user', idStudent)
+            .where('exam_grades.id_class', idClass)
+        })
+      })
+    } else if (status === 'pending') {
+      // Examens en cours (start_date <= maintenant <= end_date) ET pas d'exam_grade
+      examsQuery
+        .wherePivot('start_date', '<=', today)
+        .wherePivot('end_date', '>=', today)
+        .whereNotExists((query) => {
+          query
+            .from('exam_grades')
+            .whereRaw('exam_grades.id_exam = exams.id_exam')
+            .where('exam_grades.id_user', idStudent)
+            .where('exam_grades.id_class', idClass)
+        })
+    } else if (status === 'comming') {
+      // Examens futurs (start_date > maintenant)
+      examsQuery.wherePivot('start_date', '>', today)
+    }
+
+    const count = await examsQuery.count('* as total')
+
+    return this.buildJSONResponse({ data: { count: count[0].$extras.total } })
   }
 
   async putExamsForClass({ params, request, auth }: HttpContext) {

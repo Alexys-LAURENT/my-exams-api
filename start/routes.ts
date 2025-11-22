@@ -66,7 +66,19 @@ router
     router
       .put(':idClass/exams/:idExam', [ExamsController, 'putExamsForClass'])
       .use(middleware.auth())
-    router.get(':idClass/exams', [ExamsController, 'getExamsOfClass']).use(middleware.auth())
+    router.get(':idClass/exams', [ExamsController, 'getAllExamsOfClass']).use(middleware.auth())
+    router
+      .get(':idClass/students/:idStudent/exams/:status', [
+        ExamsController,
+        'getExamsByTypeOfStudentInClass',
+      ])
+      .use(middleware.auth())
+    router
+      .get(':idClass/students/:idStudent/exams/:status/count', [
+        ExamsController,
+        'getCountExamsByTypeOfStudentInClass',
+      ])
+      .use(middleware.auth())
     router.get(':idClass/students/:idStudent/exams/:idExam/exam_grades', [
       ExamGradesController,
       'getExamGradeForOneStudent',
