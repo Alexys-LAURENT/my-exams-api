@@ -66,3 +66,9 @@ export const updateTeacherValidator = vine.compile(
     avatarPath: vine.string().optional(),
   })
 )
+
+export const activeExamsQueryValidator = vine.compile(
+  vine.object({
+    limit: vine.number().positive().optional(),
+  })
+)

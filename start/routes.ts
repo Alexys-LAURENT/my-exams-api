@@ -104,6 +104,7 @@ router
     router.get('/', [TeachersController, 'getAll'])
     router.get(':idTeacher', [TeachersController, 'getOneTeacher'])
     router.post('/', [TeachersController, 'createTeacher'])
+    router.get('/:idTeacher/exams/active', [TeachersController, 'getActiveExamsForOneTeacher'])
     router.get('/:idTeacher/exams', [ExamsController, 'getAllExamsForOneTeacher'])
     router.delete('/:idTeacher', [TeachersController, 'deleteTeacher'])
     router.put('/:idTeacher', [TeachersController, 'updateTeacher'])
