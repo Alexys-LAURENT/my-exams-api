@@ -37,6 +37,13 @@ export const createExamValidator = vine.compile(
           .first()
         return !!row
       }),
+    idMatiere: vine
+      .number()
+      .positive()
+      .exists(async (db, value) => {
+        const row = await db.from('matieres').where('id_matiere', value).first()
+        return !!row
+      }),
   })
 )
 
@@ -132,6 +139,23 @@ export const onlyIdClassWithExistsValidator = vine.compile(
       const row = await db.from('classes').where('id_class', value).first()
       return row ? true : false
     }),
+  })
+)
+
+export const updateExamValidator = vine.compile(
+  vine.object({
+    title: vine.string().trim().maxLength(100).optional(),
+    desc: vine.string().trim().maxLength(255).nullable().optional(),
+    time: vine.number().min(0).optional(),
+    imagePath: vine.string().optional(),
+    idMatiere: vine
+      .number()
+      .positive()
+      .exists(async (db, value) => {
+        const row = await db.from('matieres').where('id_matiere', value).first()
+        return !!row
+      })
+      .optional(),
   })
 )
 

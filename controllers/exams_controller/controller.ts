@@ -22,6 +22,7 @@ import {
   onlyIdExamAndIdClassAndIdStudentWithExistsValidator,
   onlyIdExamWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
+  updateExamValidator,
   onlyLimitValidator,
 } from './validator.js'
 
@@ -218,6 +219,7 @@ export default class ExamsController extends AbstractController {
       time: content.time,
       imagePath: content.imagePath ?? null,
       idTeacher: content.idTeacher,
+      idMatiere: content.idMatiere,
     })
     return this.buildJSONResponse({ data: exam })
   }
@@ -587,5 +589,67 @@ export default class ExamsController extends AbstractController {
     }
 
     return this.buildJSONResponse({ data: recap })
+  }
+
+  public async updateExam({ params, request, auth }: HttpContext) {
+    const user = await auth.authenticate()
+    if (!user || user.accountType !== 'teacher') {
+      throw new UnauthorizedException('Seuls les enseignants peuvent modifier un examen')
+    }
+
+    const content = await updateExamValidator.validate(request.body())
+    const exam = await Exam.findOrFail(params.idExam)
+
+    // Vérifier que l'enseignant est propriétaire de l'examen
+    if (exam.idTeacher !== user.idUser) {
+      throw new UnauthorizedException('Vous ne pouvez modifier que vos propres examens')
+    }
+
+    // Vérifier qu'aucune classe n'a commencé
+    const examClasses = await exam
+      .related('classes')
+      .query()
+      .pivotColumns(['start_date', 'end_date'])
+    const now = DateTime.now()
+    const hasStarted = examClasses.some((ec) => {
+      const startDate = ec.$extras.pivot_start_date
+      return startDate && DateTime.fromJSDate(startDate) <= now
+    })
+
+    if (hasStarted) {
+      throw new UnauthorizedException(
+        'Cet examen ne peut plus être modifié car au moins une classe a déjà commencé'
+      )
+    }
+
+    // Mettre à jour l'examen
+    if (content.title) exam.title = content.title
+    if (content.desc !== undefined) exam.desc = content.desc
+    if (content.time) exam.time = content.time
+    if (content.idMatiere) exam.idMatiere = content.idMatiere
+
+    await exam.save()
+    return this.buildJSONResponse({ data: exam })
+  }
+
+  /**
+   * Récupère les classes assignées à un examen avec leurs dates
+   */
+  public async getExamClasses({ params }: HttpContext) {
+    const valid = await onlyIdExamWithExistsValidator.validate(params)
+    const exam = await Exam.findOrFail(valid.idExam)
+
+    const examClasses = await exam
+      .related('classes')
+      .query()
+      .pivotColumns(['start_date', 'end_date'])
+
+    const serializedClasses = examClasses.map((classItem) => ({
+      ...classItem.toJSON(),
+      start_date: classItem.$extras.pivot_start_date,
+      end_date: classItem.$extras.pivot_end_date,
+    }))
+
+    return this.buildJSONResponse({ data: serializedClasses })
   }
 }

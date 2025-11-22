@@ -1,9 +1,12 @@
 import UnauthorizedException from '#exceptions/un_authorized_exception'
 import Class from '#models/class'
+import Exam from '#models/exam'
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
 import {
+  activeExamsQueryValidator,
   classTeacherAssociationValidator,
   classTeacherParamsValidator,
   createTeacherValidator,
@@ -82,6 +85,11 @@ export default class TeachersController extends AbstractController {
       avatarPath: content.avatarPath ?? null,
       accountType: 'teacher',
     })
+
+    if (content.matiereIds && content.matiereIds.length > 0) {
+      await teacher.related('matieres').attach(content.matiereIds)
+    }
+
     return this.buildJSONResponse({ data: teacher })
   }
 
@@ -96,5 +104,74 @@ export default class TeachersController extends AbstractController {
   public async getAll() {
     const teachers = await User.query().where('account_type', 'teacher')
     return this.buildJSONResponse({ data: teachers })
+  }
+
+  /**
+   * Récupère les matières d'un enseignant
+   */
+  public async getMatieres({ params }: HttpContext) {
+    const valid = await onlyIdTeacherWithExistsValidator.validate(params)
+    const teacher = await User.findOrFail(valid.idTeacher)
+    const matieres = await teacher.related('matieres').query()
+    return this.buildJSONResponse({ data: matieres })
+  }
+
+  /**
+   * Récupère les examens actifs d'un enseignant (ExamClass[])
+   * Actif = en cours (start_date <= now <= end_date) OU à venir (start_date > now)
+   * Retourne uniquement les données de la table pivot exams_classes
+   */
+  public async getActiveExamsForOneTeacher({ params, request }: HttpContext) {
+    const valid = await onlyIdTeacherWithExistsValidator.validate(params)
+    const queryParams = await activeExamsQueryValidator.validate(request.qs())
+
+    // Récupérer tous les examens du professeur
+    const exams = await Exam.query().where('id_teacher', valid.idTeacher)
+
+    const now = DateTime.now()
+    const activeExamClasses: Array<{
+      idExam: number
+      idClass: number
+      start_date: string
+      end_date: string
+    }> = []
+
+    for (const exam of exams) {
+      // Charger les classes avec les dates du pivot
+      const classes = await exam.related('classes').query().pivotColumns(['start_date', 'end_date'])
+
+      // Filtrer les classes actives (en cours ou à venir)
+      for (const classItem of classes) {
+        const startDate = classItem.$extras.pivot_start_date
+        const endDate = classItem.$extras.pivot_end_date
+
+        if (!startDate || !endDate) continue
+
+        const start = DateTime.fromJSDate(startDate)
+        const end = DateTime.fromJSDate(endDate)
+
+        // En cours (start_date <= now <= end_date) OU à venir (start_date > now)
+        if ((start <= now && end >= now) || start > now) {
+          activeExamClasses.push({
+            idExam: exam.idExam,
+            idClass: classItem.idClass,
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+          })
+        }
+      }
+    }
+
+    // Trier par date de début prochaine (ascendant) - tri global par start_date
+    activeExamClasses.sort((a, b) => Date.parse(a.start_date) - Date.parse(b.start_date))
+
+    // Appliquer la limite si fournie
+    const limitedExamClasses = queryParams.limit
+      ? activeExamClasses.slice(0, queryParams.limit)
+      : activeExamClasses
+
+    console.log('limitedExamClasses', limitedExamClasses)
+
+    return this.buildJSONResponse({ data: limitedExamClasses })
   }
 }

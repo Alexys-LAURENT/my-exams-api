@@ -10,6 +10,7 @@ import type { HasMany, ManyToMany } from '@adonisjs/lucid/types/relations'
 import { DateTime } from 'luxon'
 import Evaluation from './evaluation.js'
 import Exam from './exam.js'
+import Matiere from './matiere.js'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -77,6 +78,16 @@ export default class User extends compose(BaseModel, AuthFinder) {
     pivotRelatedForeignKey: 'id_class',
   })
   declare teacherClasses: ManyToMany<typeof Class>
+
+  // Relations avec les matières en tant qu'enseignant
+  @manyToMany(() => Matiere, {
+    pivotTable: 'teacher_matieres',
+    localKey: 'idUser',
+    pivotForeignKey: 'id_teacher',
+    relatedKey: 'idMatiere',
+    pivotRelatedForeignKey: 'id_matiere',
+  })
+  declare matieres: ManyToMany<typeof Matiere>
 
   @hasMany(() => Evaluation, {
     foreignKey: 'idTeacher',

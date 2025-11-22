@@ -41,6 +41,7 @@ export const createTeacherValidator = vine.compile(
     email: vine.string().email().trim(),
     password: vine.string().minLength(6),
     avatarPath: vine.string().optional(),
+    matiereIds: vine.array(vine.number()).minLength(1),
   })
 )
 
@@ -63,5 +64,11 @@ export const updateTeacherValidator = vine.compile(
     name: vine.string().trim().maxLength(100).optional(),
     email: vine.string().email().trim().optional(),
     avatarPath: vine.string().optional(),
+  })
+)
+
+export const activeExamsQueryValidator = vine.compile(
+  vine.object({
+    limit: vine.number().positive().optional(),
   })
 )
