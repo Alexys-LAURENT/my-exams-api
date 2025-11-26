@@ -97,6 +97,10 @@ router
       .get(':idClass/students/:idStudent/exams/:idExam/recap', [ExamsController, 'recap'])
       .use(middleware.auth())
     router.get('exams/:idExam', [ClassesController, 'getClassesForOneExam'])
+    router.get(':idClass/students/:idUser/grades-summary', [
+      StatsController,
+      'getUserInClassGradesSummary',
+    ])
   })
   .prefix('/api/classes')
 

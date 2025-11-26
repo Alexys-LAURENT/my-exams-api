@@ -1,4 +1,6 @@
 import ClientAccessibleException from '#exceptions/client_accessible_exception'
+import UnAuthorizedException from '#exceptions/un_authorized_exception'
+import Exam from '#models/exam'
 import ExamGrade from '#models/exam_grade'
 import Question from '#models/question'
 import { inject } from '@adonisjs/core'
@@ -264,6 +266,70 @@ export default class StatsController extends AbstractController {
     const totalAverage = await this.statsService.getGeneralAverageForClass(idClass)
     return this.buildJSONResponse({
       data: { average: totalAverage },
+    })
+  }
+
+  public async getUserInClassGradesSummary({ params, auth }: HttpContext) {
+    const loggedUser = await auth.authenticate()
+    const validParams = await idClassAndIdUserValidator.validate(params)
+    const { idClass, idUser } = validParams
+
+    if (loggedUser.accountType === 'student' && loggedUser.idUser !== idUser) {
+      throw new ClientAccessibleException("Vous n'êtes pas autorisé à voir ce résumé")
+    }
+    if (loggedUser.accountType === 'student') {
+      // Vérifier que l'utilisateur appartient à cette classe
+      const userInClass = await db
+        .from('students_classes')
+        .where('id_student', idUser)
+        .andWhere('id_class', idClass)
+        .first()
+      if (!userInClass) {
+        throw new UnAuthorizedException("L'utilisateur ne fait pas partie de cette classe")
+      }
+    }
+
+    const allClassSubjects = await this.statsService.getAllSubjectsInClass(idClass)
+
+    let subjectAverages = [] as {
+      idMatiere: number
+      average: number | null
+    }[]
+
+    for (const subject of allClassSubjects) {
+      const subjectAverage = await this.statsService.getUserSubjectAverageInClass(
+        idUser,
+        idClass,
+        subject.idMatiere
+      )
+      subjectAverages.push({
+        idMatiere: subject.idMatiere,
+        average: subjectAverage,
+      })
+    }
+
+    // get all expired exams for this class
+    const passedExams = await Exam.query().whereHas('classes', (query) => {
+      query.where('classes.id_class', idClass).andWhere('exams_classes.end_date', '<', new Date())
+    })
+
+    // get all the grades of the user for this class
+    const grades = await ExamGrade.query().where('id_user', idUser).andWhere('id_class', idClass)
+
+    const examsWithGrades = passedExams.map((exam) => {
+      const grade = grades.find((g) => g.idExam === exam.idExam)
+      return {
+        ...exam.toJSON(),
+        examGrade: grade ? grade.toJSON() : null,
+      }
+    })
+
+    return this.buildJSONResponse({
+      data: {
+        subjects: allClassSubjects,
+        examsWithGrades: examsWithGrades,
+        subjectAverages: subjectAverages,
+      },
     })
   }
 }
