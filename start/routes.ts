@@ -49,6 +49,7 @@ router
     router.delete('/:idClass', [ClassesController, 'deleteIdClass']).use(middleware.auth())
     router.get('/:idClasse/degrees', [DegreesController, 'getPromosOfClass'])
     router.get('/:idClass/students', [StudentsController, 'getStudentsOfClass'])
+    router.get('/:idClass/teachers', [TeachersController, 'getTeachersOfClass'])
     router
       .put(':idClass/students/:idStudent', [StudentsController, 'putStudentToClass'])
       .use(middleware.auth())
@@ -111,6 +112,7 @@ router
     router.put('/:idStudent', [StudentsController, 'updateStudent'])
     router.get('/:idStudent/classes', [ClassesController, 'getStudentClasses'])
     router.get('/', [StudentsController, 'getAll'])
+    router.get('/count', [StudentsController, 'getAllCount'])
     router.get('/:idStudent', [StudentsController, 'getOneStudent'])
   })
   .prefix('/api/students')
@@ -118,6 +120,7 @@ router
 router
   .group(() => {
     router.get('/', [TeachersController, 'getAll'])
+    router.get('/count', [TeachersController, 'getAllCount'])
     router.get(':idTeacher', [TeachersController, 'getOneTeacher'])
     router.post('/', [TeachersController, 'createTeacher'])
     router.get('/:idTeacher/exams/active', [TeachersController, 'getActiveExamsForOneTeacher'])

@@ -56,3 +56,19 @@ export const classStudentParamsValidator = vine.compile(
     }),
   })
 )
+
+export const paginateWithFilterValidator = vine.compile(
+  vine.object({
+    page: vine.number().positive(),
+    filter: vine
+      .string()
+      .optional()
+      .transform((value) => {
+        if (value) {
+          return decodeURIComponent(value)
+        } else {
+          return undefined
+        }
+      }),
+  })
+)

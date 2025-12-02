@@ -72,3 +72,28 @@ export const activeExamsQueryValidator = vine.compile(
     limit: vine.number().positive().optional(),
   })
 )
+
+export const paginateWithFilterValidator = vine.compile(
+  vine.object({
+    page: vine.number().positive(),
+    filter: vine
+      .string()
+      .optional()
+      .transform((value) => {
+        if (value) {
+          return decodeURIComponent(value)
+        } else {
+          return undefined
+        }
+      }),
+  })
+)
+
+export const onlyIdClassWithExistsValidator = vine.compile(
+  vine.object({
+    idClass: vine.number().exists(async (db, value) => {
+      const row = await db.from('classes').where('id_class', value).first()
+      return row ? true : false
+    }),
+  })
+)

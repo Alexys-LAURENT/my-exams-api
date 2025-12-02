@@ -3,6 +3,7 @@ import Class from '#models/class'
 import Exam from '#models/exam'
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
+import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
 import {
@@ -10,7 +11,9 @@ import {
   classTeacherAssociationValidator,
   classTeacherParamsValidator,
   createTeacherValidator,
+  onlyIdClassWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
+  paginateWithFilterValidator,
   updateTeacherValidator,
 } from './validator.js'
 
@@ -101,8 +104,33 @@ export default class TeachersController extends AbstractController {
     })
   }
 
-  public async getAll() {
-    const teachers = await User.query().where('account_type', 'teacher')
+  public async getAll({ request }: HttpContext) {
+    const validParams = await paginateWithFilterValidator.validate(request.qs())
+    const query = User.query().where('account_type', 'teacher')
+
+    if (validParams.filter) {
+      query.andWhere((q) => {
+        q.where('name', 'like', `%${validParams.filter}%`)
+          .orWhere('last_name', 'like', `%${validParams.filter}%`)
+          .orWhere('email', 'like', `%${validParams.filter}%`)
+      })
+    }
+
+    const teachers = await query.paginate(validParams.page, 20)
+    return this.buildJSONResponse({ data: teachers })
+  }
+
+  public async getAllCount() {
+    const users = await db.from('users').where('account_type', 'teacher').count('* as total')
+    return this.buildJSONResponse({ data: Number.parseInt(users[0].total) })
+  }
+
+  public async getTeachersOfClass({ params }: HttpContext) {
+    const valid = await onlyIdClassWithExistsValidator.validate(params)
+    const theClass = await Class.findOrFail(valid.idClass)
+
+    const teachers = await theClass.related('teachers').query()
+
     return this.buildJSONResponse({ data: teachers })
   }
 

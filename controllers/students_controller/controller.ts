@@ -2,12 +2,14 @@ import UnAuthorizedException from '#exceptions/un_authorized_exception'
 import Class from '#models/class'
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
+import db from '@adonisjs/lucid/services/db'
 import AbstractController from '../abstract_controller.js'
 import {
   classStudentParamsValidator,
   createStudentValidator,
   onlyIdClassWithExistsValidator,
   onlyIdStudentWithExistsValidator,
+  paginateWithFilterValidator,
   updateStudentValidator,
 } from './validator.js'
 
@@ -98,9 +100,25 @@ export default class StudentsController extends AbstractController {
     })
   }
 
-  public async getAll() {
-    const students = await User.query().where('account_type', 'student')
+  public async getAll({ request }: HttpContext) {
+    const validParams = await paginateWithFilterValidator.validate(request.qs())
+    const query = User.query().where('account_type', 'student')
+
+    if (validParams.filter) {
+      query.andWhere((q) => {
+        q.where('name', 'like', `%${validParams.filter}%`)
+          .orWhere('last_name', 'like', `%${validParams.filter}%`)
+          .orWhere('email', 'like', `%${validParams.filter}%`)
+      })
+    }
+
+    const students = await query.paginate(validParams.page, 20)
     return this.buildJSONResponse({ data: students })
+  }
+
+  public async getAllCount() {
+    const users = await db.from('users').where('account_type', 'student').count('* as total')
+    return this.buildJSONResponse({ data: Number.parseInt(users[0].total) })
   }
 
   public async getOneStudent({ params }: HttpContext) {
