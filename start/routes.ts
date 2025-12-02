@@ -37,6 +37,7 @@ router
   .group(() => {
     router.post('/login', [AuthController, 'login'])
     router.post('/logout', [AuthController, 'logout']).use(middleware.auth())
+    router.put('/update-password', [AuthController, 'updateOwnPassword']).use(middleware.auth())
   })
   .prefix('/api/auth')
 

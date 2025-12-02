@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import ClientAccessibleException from '#exceptions/client_accessible_exception'
+import UnAuthorizedException from '#exceptions/un_authorized_exception'
 import User from '#models/user'
 import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
@@ -7,7 +8,7 @@ import hash from '@adonisjs/core/services/hash'
 import limiter from '@adonisjs/limiter/services/main'
 import UsersRepository from '../../app/repositories/users_repository.js'
 import AbstractController from '../abstract_controller.js'
-import { loginUserValidator } from './validators.js'
+import { loginUserValidator, updateOwnPasswordValidator } from './validators.js'
 
 @inject()
 export default class AuthController extends AbstractController {
@@ -90,5 +91,19 @@ export default class AuthController extends AbstractController {
     const token = user.currentAccessToken
     await User.accessTokens.delete(user, token.identifier)
     return this.buildJSONResponse({ message: 'Logged out successfully' })
+  }
+
+  public async updateOwnPassword({ request, auth }: HttpContext) {
+    const user = await auth.authenticate()
+    const { currentPassword, newPassword } = await updateOwnPasswordValidator.validate(
+      request.body()
+    )
+    const does_password_match = await hash.verify(user.password, currentPassword)
+    if (!does_password_match) {
+      throw new UnAuthorizedException('Le mot de passe actuel est incorrect')
+    }
+    user.password = newPassword
+    await user.save()
+    return this.buildJSONResponse({ message: 'Mot de passe mis à jour avec succès' })
   }
 }

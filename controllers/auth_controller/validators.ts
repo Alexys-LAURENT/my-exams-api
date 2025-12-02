@@ -62,3 +62,12 @@ export const registerUserValidator = vine.compile(
     termsAccepted: vine.boolean(),
   })
 )
+
+export const updateOwnPasswordValidator = vine.compile(
+  vine.object({
+    currentPassword: vine.string().trim().escape(),
+    newPassword: vine
+      .string()
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/),
+  })
+)
