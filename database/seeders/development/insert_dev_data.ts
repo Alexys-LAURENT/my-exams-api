@@ -8,6 +8,7 @@ import Question from '#models/question'
 import User from '#models/user'
 import UserResponse from '#models/user_response'
 
+import Matiere from '#models/matiere'
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
@@ -47,6 +48,7 @@ export default class InsertDevDataSeeder extends BaseSeeder {
     await Class.query().delete()
     await Degree.query().delete()
     await User.query().delete()
+    await Matiere.query().delete()
     console.log('✅ Base de données nettoyée')
 
     // ============================================
