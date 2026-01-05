@@ -269,7 +269,7 @@ export default class InsertDevDataSeeder extends BaseSeeder {
         const randomMatiere = this.getRandomElement(teacherMatieres)
 
         const exam = await Exam.create({
-          idExam: examId++,
+          // idExam: examId++,
           title: examData.title,
           desc: examData.desc,
           idTeacher: teacher.idUser,
