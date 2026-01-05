@@ -22,8 +22,8 @@ import {
   onlyIdExamAndIdClassAndIdStudentWithExistsValidator,
   onlyIdExamWithExistsValidator,
   onlyIdTeacherWithExistsValidator,
-  updateExamValidator,
   onlyLimitValidator,
+  updateExamValidator,
 } from './validator.js'
 
 export default class ExamsController extends AbstractController {
@@ -529,7 +529,7 @@ export default class ExamsController extends AbstractController {
       return this.buildJSONResponse({
         data: {
           ...exam.toJSON(),
-          examGrade: examGrade ? examGrade.toJSON() : null,
+          examGrade: examGrade ? { ...examGrade.toJSON(), note: '-' } : null,
           isExamTimeFinished,
         },
       })

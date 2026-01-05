@@ -1,7 +1,10 @@
+import ClientAccessibleException from '#exceptions/client_accessible_exception'
 import UnAuthorizedException from '#exceptions/un_authorized_exception'
 import Exam from '#models/exam'
 import ExamGrade from '#models/exam_grade'
 import type { HttpContext } from '@adonisjs/core/http'
+import db from '@adonisjs/lucid/services/db'
+import { DateTime } from 'luxon'
 import AbstractController from '../abstract_controller.js'
 import {
   getExamGradesForStudentValidator,
@@ -16,13 +19,37 @@ export default class ExamGradesController extends AbstractController {
     super()
   }
 
-  public async getExamGradeForOneStudent({ params }: HttpContext) {
+  public async getExamGradeForOneStudent({ params, auth }: HttpContext) {
+    const loggedUser = await auth.authenticate()
     const valid = await idStudentAndIdExamAndIdClassWithExistsValidator.validate(params)
     const examGrade = await ExamGrade.query()
       .where('id_user', valid.idStudent)
       .andWhere('id_exam', valid.idExam)
       .andWhere('id_class', valid.idClass)
       .firstOrFail()
+
+    const relationExamClass = (await db
+      .from('exams_classes')
+      .where({
+        id_exam: valid.idExam,
+        id_class: valid.idClass,
+      })
+      .first()) as
+      | { id_exam: number; id_class: number; start_date: Date; end_date: Date }
+      | undefined
+
+    if (!relationExamClass) {
+      throw new ClientAccessibleException("This exam isn't associated with this class")
+    }
+
+    const isExamTimeFinished = DateTime.now() > DateTime.fromJSDate(relationExamClass.end_date)
+
+    if (!isExamTimeFinished && loggedUser.accountType === 'student') {
+      return this.buildJSONResponse({
+        data: examGrade ? { ...examGrade.toJSON(), note: '-' } : null,
+      })
+    }
+
     return this.buildJSONResponse({ data: examGrade })
   }
 
