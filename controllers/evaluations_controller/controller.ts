@@ -35,7 +35,10 @@ export default class EvaluationsController extends AbstractController {
       throw new UnAuthorizedException('An evaluation for this user response already exists')
     }
 
-    const question = await Question.findOrFail(theUserResponse.idQuestion)
+    const question = await Question.query()
+      .where('idQuestion', theUserResponse.idQuestion)
+      .andWhere('idExam', theUserResponse.idExam)
+      .firstOrFail()
 
     if (valid.note! > question.maxPoints) {
       throw new UnAuthorizedException(
@@ -72,7 +75,10 @@ export default class EvaluationsController extends AbstractController {
     const valid = await updateEvaluationValidator.validate(request.body())
 
     const userResponse = await UserResponse.findOrFail(evaluation.idUserResponse)
-    const question = await Question.findOrFail(userResponse.idQuestion)
+    const question = await Question.query()
+      .where('idQuestion', userResponse.idQuestion)
+      .andWhere('idExam', userResponse.idExam)
+      .firstOrFail()
 
     if (valid.note! > question.maxPoints) {
       throw new UnAuthorizedException(
