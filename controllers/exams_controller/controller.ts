@@ -610,7 +610,11 @@ export default class ExamsController extends AbstractController {
     return this.buildJSONResponse({ data: recap })
   }
 
-  public async updateExam({ params, request, auth }: HttpContext) {
+  @inject()
+  public async updateExam(
+    { params, request, auth }: HttpContext,
+    examAuthService: ExamAuthorizationService
+  ) {
     const user = await auth.authenticate()
     if (!user || user.accountType !== 'teacher') {
       throw new UnauthorizedException('Seuls les enseignants peuvent modifier un examen')
@@ -624,22 +628,8 @@ export default class ExamsController extends AbstractController {
       throw new UnauthorizedException('Vous ne pouvez modifier que vos propres examens')
     }
 
-    // Vérifier qu'aucune classe n'a commencé
-    const examClasses = await exam
-      .related('classes')
-      .query()
-      .pivotColumns(['start_date', 'end_date'])
-    const now = DateTime.now()
-    const hasStarted = examClasses.some((ec) => {
-      const startDate = ec.$extras.pivot_start_date
-      return startDate && DateTime.fromJSDate(startDate) <= now
-    })
-
-    if (hasStarted) {
-      throw new UnauthorizedException(
-        'Cet examen ne peut plus être modifié car au moins une classe a déjà commencé'
-      )
-    }
+    // Vérifie ownership + pas de classe commencée
+    await examAuthService.checkExamModifiable(exam.idExam, user.idUser)
 
     // Mettre à jour l'examen
     if (content.title) exam.title = content.title
