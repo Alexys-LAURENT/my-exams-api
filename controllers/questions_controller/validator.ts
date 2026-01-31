@@ -32,3 +32,13 @@ export const createQuestionValidator = vine.compile(
     maxPoints: vine.number().min(0),
   })
 )
+
+export const updateQuestionValidator = vine.compile(
+  vine.object({
+    title: vine.string().trim().maxLength(255).optional(),
+    commentary: vine.string().trim().maxLength(255).nullable().optional(),
+    isMultiple: vine.boolean().optional(),
+    isQcm: vine.boolean().optional(),
+    maxPoints: vine.number().min(0).optional(),
+  })
+)

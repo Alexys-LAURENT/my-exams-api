@@ -373,6 +373,11 @@ router
       .put(':idExam', [ExamsController, 'updateExam'])
       .use([middleware.auth(), middleware.role({ roles: ['teacher'] })])
 
+    // Teacher only - delete exam
+    router
+      .delete(':idExam', [ExamsController, 'deleteExam'])
+      .use([middleware.auth(), middleware.role({ roles: ['teacher'] })])
+
     // Teacher only - create exam
     router
       .post('/', [ExamsController, 'createExam'])
@@ -383,9 +388,32 @@ router
       .post('/:idExam/questions', [QuestionsController, 'createQuestion'])
       .use([middleware.auth(), middleware.role({ roles: ['teacher'] })])
 
+    // Teacher only - update question
+    router
+      .put('/:idExam/questions/:idQuestion', [QuestionsController, 'updateQuestion'])
+      .use([middleware.auth(), middleware.role({ roles: ['teacher'] })])
+
+    // Teacher only - delete question
+    router
+      .delete('/:idExam/questions/:idQuestion', [QuestionsController, 'deleteQuestion'])
+      .use([middleware.auth(), middleware.role({ roles: ['teacher'] })])
+
     // Teacher only - create answers
     router
       .post('/:idExam/questions/:idQuestion/answers', [AnswersController, 'createAnswers'])
+      .use([middleware.auth(), middleware.role({ roles: ['teacher'] })])
+
+    // Teacher only - update answer
+    router
+      .put('/:idExam/questions/:idQuestion/answers/:idAnswer', [AnswersController, 'updateAnswer'])
+      .use([middleware.auth(), middleware.role({ roles: ['teacher'] })])
+
+    // Teacher only - delete answer
+    router
+      .delete('/:idExam/questions/:idQuestion/answers/:idAnswer', [
+        AnswersController,
+        'deleteAnswer',
+      ])
       .use([middleware.auth(), middleware.role({ roles: ['teacher'] })])
 
     // Teacher only - get all questions

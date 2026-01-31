@@ -8,7 +8,9 @@ import ExamGrade from '#models/exam_grade'
 import Question from '#models/question'
 import User from '#models/user'
 import UserResponse from '#models/user_response'
+import ExamAuthorizationService from '#services/exam_authorization_service'
 import examService from '#services/exam_service'
+import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 import { DateTime } from 'luxon'
@@ -506,6 +508,7 @@ export default class ExamsController extends AbstractController {
     const isOwner = loggedUser.accountType !== 'teacher' || exam.idTeacher === loggedUser.idUser
 
     // If the teacher is viewing another teacher's exam, fetch the owner's name for display
+    // eslint-disable-next-line no-undef-init
     let ownerName: string | undefined = undefined
     if (loggedUser.accountType === 'teacher' && !isOwner) {
       const owner = await User.find(exam.idTeacher)
@@ -646,6 +649,42 @@ export default class ExamsController extends AbstractController {
 
     await exam.save()
     return this.buildJSONResponse({ data: exam })
+  }
+
+  /**
+   * Supprime un examen (avec ses questions, réponses, et données associées)
+   * Conditions: l'enseignant doit être propriétaire ET aucune classe ne doit avoir commencé
+   */
+  @inject()
+  public async deleteExam(
+    { params, auth }: HttpContext,
+    examAuthService: ExamAuthorizationService
+  ) {
+    const user = await auth.authenticate()
+    if (!user || user.accountType !== 'teacher') {
+      throw new UnauthorizedException('Seuls les enseignants peuvent supprimer un examen')
+    }
+
+    const valid = await onlyIdExamWithExistsValidator.validate(params)
+
+    // Vérifie ownership + pas de classe commencée
+    const exam = await examAuthService.checkExamModifiable(valid.idExam, user.idUser)
+
+    // Supprimer les données liées dans l'ordre pour respecter les contraintes FK
+
+    // 1. Détacher l'examen de toutes les classes (pivot table)
+    await exam.related('classes').detach()
+
+    // 1. Supprimer les réponses des questions de cet examen
+    await Answer.query().where('id_exam', exam.idExam).delete()
+
+    // 2. Supprimer les questions de cet examen
+    await Question.query().where('id_exam', exam.idExam).delete()
+
+    // 4. Supprimer l'examen lui-même
+    await exam.delete()
+
+    return this.buildJSONResponse({ message: 'Examen supprimé avec succès' })
   }
 
   /**
