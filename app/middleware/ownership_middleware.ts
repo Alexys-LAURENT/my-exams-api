@@ -48,7 +48,7 @@ export default class OwnershipMiddleware {
 
     if (paramId !== user.idUser) {
       return ctx.response.forbidden({
-        message: 'Vous ne pouvez accéder qu\'à vos propres données',
+        message: "Vous ne pouvez accéder qu'à vos propres données",
       })
     }
 

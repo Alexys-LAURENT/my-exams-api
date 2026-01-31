@@ -266,7 +266,11 @@ router
     // Teacher & Admin - get one student
     router
       .get('/:idStudent', [StudentsController, 'getOneStudent'])
-      .use([middleware.auth(), middleware.role({ roles: ['teacher', 'admin'] })])
+      .use([
+        middleware.auth(),
+        middleware.role({ roles: ['teacher', 'admin', 'student'] }),
+        middleware.ownership({ paramName: 'idStudent', allowRoles: ['admin'] }),
+      ])
   })
   .prefix('/api/students')
 
