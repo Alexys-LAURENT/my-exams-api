@@ -6,6 +6,7 @@ import Evaluation from '#models/evaluation'
 import Exam from '#models/exam'
 import ExamGrade from '#models/exam_grade'
 import Question from '#models/question'
+import User from '#models/user'
 import UserResponse from '#models/user_response'
 import examService from '#services/exam_service'
 import type { HttpContext } from '@adonisjs/core/http'
@@ -498,8 +499,19 @@ export default class ExamsController extends AbstractController {
     // The exam
     const exam = await Exam.findOrFail(valid.idExam)
 
-    if (loggedUser.accountType === 'teacher' && exam.idTeacher !== loggedUser.idUser) {
-      throw new UnauthorizedException('Teachers can only access recaps of their own exams')
+    // Determine if the logged user is the owner of this exam
+    // - Students and admins: isOwner is always true (ownership check doesn't apply to them)
+    // - Teachers: isOwner is true only if they created this exam (exam.idTeacher === their id)
+    // When isOwner is false, the teacher can still view the recap but cannot correct it
+    const isOwner = loggedUser.accountType !== 'teacher' || exam.idTeacher === loggedUser.idUser
+
+    // If the teacher is viewing another teacher's exam, fetch the owner's name for display
+    let ownerName: string | undefined = undefined
+    if (loggedUser.accountType === 'teacher' && !isOwner) {
+      const owner = await User.find(exam.idTeacher)
+      if (owner) {
+        ownerName = `${owner.name ?? ''} ${owner.lastName ?? ''}`.trim()
+      }
     }
 
     const examGrade = await ExamGrade.query()
@@ -531,6 +543,8 @@ export default class ExamsController extends AbstractController {
           ...exam.toJSON(),
           examGrade: examGrade ? { ...examGrade.toJSON(), note: '-' } : null,
           isExamTimeFinished,
+          isOwner,
+          ownerName,
         },
       })
     }
@@ -586,6 +600,8 @@ export default class ExamsController extends AbstractController {
       }),
       examGrade: examGrade ? examGrade.toJSON() : null,
       isExamTimeFinished,
+      isOwner,
+      ownerName,
     }
 
     return this.buildJSONResponse({ data: recap })
