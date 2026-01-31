@@ -671,6 +671,21 @@ export default class InsertDevDataSeeder extends BaseSeeder {
     }
     console.log('✅ Participations et réponses générées')
 
+    // ============================================
+    // 11. RESYNCHRONISATION DES SÉQUENCES AUTO-INCREMENT
+    // ============================================
+    console.log('🔄 Resynchronisation des séquences auto-increment...')
+    await db.rawQuery(
+      `SELECT setval('matieres_id_matiere_seq', COALESCE((SELECT MAX(id_matiere) FROM matieres), 0))`
+    )
+    await db.rawQuery(
+      `SELECT setval('degrees_id_degree_seq', COALESCE((SELECT MAX(id_degree) FROM degrees), 0))`
+    )
+    await db.rawQuery(
+      `SELECT setval('classes_id_class_seq', COALESCE((SELECT MAX(id_class) FROM classes), 0))`
+    )
+    console.log('✅ Séquences resynchronisées')
+
     // Récupérer les statistiques finales
     const finalStudents = await User.query().where('account_type', 'student')
     const finalTeachers = await User.query().where('account_type', 'teacher')
